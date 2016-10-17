@@ -52,7 +52,7 @@ HIST_STAMPS="mm/dd/yyyy"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git completion ruby rails gem bundler command-not-found composer common-aliases compleat dircycle dirhistory encode64 historyvagrant colorize)
+plugins=(git completion ruby rails gem bundler command-not-found composer common-aliases compleat dircycle dirhistory encode64 historyvagrant colorize docker)
 
 # User configuration
 
@@ -101,3 +101,5 @@ export PSQL_EDITOR=/usr/bin/vim
 
 #POWERLEVEL9K_MODE='awesome-fontconfig'
 #POWERLEVEL9K_MODE='awesome-patched'
+
+export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
