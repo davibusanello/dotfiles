@@ -1,7 +1,6 @@
 # Path to your oh-my-zsh installation.
-  export ZSH=/home/davi/.oh-my-zsh
-  export TERM='xterm-256color'
-
+export ZSH=$HOME/.oh-my-zsh
+export TERM="xterm-256color"
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
@@ -9,6 +8,11 @@
 #ZSH_THEME="agnoster"
 ZSH_THEME="powerlevel9k/powerlevel9k"
 POWERLEVEL9K_MODE='awesome-patched'
+#themes custom
+#POWERLEVEL9K_COLOR_SCHEME='dark'
+POWERLEVEL9K_PROMPT_ON_NEWLINE=true
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs php_version)
+POWERLEVEL9K_STATUS_VERBOSE=true
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -90,6 +94,7 @@ alias ohmyzsh="vim ~/.oh-my-zsh"
 source /etc/profile.d/vte-2.91.sh
 
 export HISTSIZE=5000
+export PGUSER=postgres
 export PAGER=less
 export PSQL_EDITOR=/usr/bin/vim
 
