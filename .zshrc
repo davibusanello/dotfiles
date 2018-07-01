@@ -121,10 +121,6 @@ COMPOSER_HOME=$HOME/.composer
 COMPOSER_PATH=$COMPOSER_PATH/vendor/bin
 export PATH=$PATH:$GEM_HOME/bin:$COMPOSER_PATH
 
-# My personal aliases
-# export DOTFILES_PATH="$HOME/Projects/dotfiles"
-# source $DOTFILES_PATH/lib/aliases/loader.sh
-
-
-# alias yaourt_upgrade_all='yaourt -Syyua'
-# source ~/Projects/docker-aliases/aliases.sh
+# My personal aliases librar
+export DOTFILES_PATH="$HOME/Projects/dotfiles"
+source $DOTFILES_PATH/lib/aliases/loader.sh
