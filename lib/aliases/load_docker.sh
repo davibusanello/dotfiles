@@ -14,16 +14,12 @@ IMG_PHP="php:7.0-alpine3.7"
 
 function composer () {
     docker container run -it --rm \
-        --name
+        --name=composer \
         -v $COMPOSER_HOME:/tmp \
+        --user $(id -u):$(id -g) \
         --volume $PWD:/app \
-        --volume $SSH_AUTH_SOCK:/ssh-auth.sock \
         --volume /etc/passwd:/etc/passwd:ro \
         --volume /etc/group:/etc/group:ro \
-        --user $(id -u):$(id -g) \
-        --env SSH_AUTH_SOCK=/ssh-auth.sock \
         $IMG_COMPOSER "$@"
-        
-
 }
 
