@@ -57,7 +57,9 @@ HIST_STAMPS="mm/dd/yyyy"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git completion ruby rails gem bundler command-not-found composer common-aliases compleat dircycle dirhistory encode64 historyvagrant colorize docker docker-compose thefuck nodejs npm yarn)
+# Using in docker
+#  ruby rails gem bundler command-not-found
+plugins=(git completion composer common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn)
 
 # User configuration
 
@@ -115,14 +117,14 @@ export PSQL_EDITOR=/usr/bin/vim
 
 #export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 #Setting the GEM_PATH and GEM_HOME variables may not be necessary, check 'gem env' output to verify whether both variables already exist 
-GEM_HOME=$(ls -t -U | ruby -e 'puts Gem.user_dir')
-GEM_PATH=$GEM_HOME
+# GEM_HOME=$(ls -t -U | ruby -e 'puts Gem.user_dir')
+# GEM_PATH=$GEM_HOME/bin
 COMPOSER_HOME=$HOME/.composer
 COMPOSER_PATH=$COMPOSER_PATH/vendor/bin
 NPM_PATH=$(npm bin)
 YARN_HOME=$(yarn global dir)
 YARN_PATH=$HOME/.yarn/bin
-export PATH=$PATH:$GEM_HOME/bin:$COMPOSER_PATH:$YARN_PATH:$NPM_PATH
+export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$NPM_PATH
 
 # My personal aliases librar
 export DOTFILES_PATH="$HOME/Projects/dotfiles"
