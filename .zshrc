@@ -57,7 +57,7 @@ HIST_STAMPS="mm/dd/yyyy"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git completion ruby rails gem bundler command-not-found composer common-aliases compleat dircycle dirhistory encode64 historyvagrant colorize docker docker-compose thefuck)
+plugins=(git completion ruby rails gem bundler command-not-found composer common-aliases compleat dircycle dirhistory encode64 historyvagrant colorize docker docker-compose thefuck nodejs npm yarn)
 
 # User configuration
 
@@ -119,7 +119,10 @@ GEM_HOME=$(ls -t -U | ruby -e 'puts Gem.user_dir')
 GEM_PATH=$GEM_HOME
 COMPOSER_HOME=$HOME/.composer
 COMPOSER_PATH=$COMPOSER_PATH/vendor/bin
-export PATH=$PATH:$GEM_HOME/bin:$COMPOSER_PATH
+NPM_PATH=$(npm bin)
+YARN_HOME=$(yarn global dir)
+YARN_PATH=$HOME/.yarn/bin
+export PATH=$PATH:$GEM_HOME/bin:$COMPOSER_PATH:$YARN_PATH:$NPM_PATH
 
 # My personal aliases librar
 export DOTFILES_PATH="$HOME/Projects/dotfiles"
