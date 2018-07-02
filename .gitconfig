@@ -1,0 +1,8 @@
+[user]
+	signingkey = 7C1F431A60BE4FAB
+	name = Davi Busanello
+	email = itsme@davibusanello.net
+[diff]
+	tool = meld
+[core]
+	pager = less -F -X
