@@ -101,8 +101,10 @@ if [ $TILIX_ID ] || [ $VTE_VERSION ]; then
         source /etc/profile.d/vte.sh
 fi
 
-export HISTSIZE=5000
+export HISTSIZE=3000
+export SAVEHIST=3000
 export PAGER=less
+export LESS="-F -X $LESS"
 export PSQL_EDITOR=/usr/bin/vim
 
 # export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr
