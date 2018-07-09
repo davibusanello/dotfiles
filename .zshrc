@@ -12,7 +12,10 @@
 
 # POWERLEVEL9K_MODE='nerdfont-complete'
 POWERLEVEL9K_MODE='awesome-fontconfig'
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs newline)
+POWERLEVEL9K_PROMPT_ON_NEWLINE=true
+
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir dir_writable vcs)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time root_indicator background_jobs history time ip public_ip ssh)
 ZSH_THEME="powerlevel9k/powerlevel9k"
 
 # Uncomment the following line to use case-sensitive completion.
@@ -129,5 +132,5 @@ YARN_PATH=$HOME/.yarn/bin
 export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$NPM_PATH
 
 # My personal aliases librar
-export DOTFILES_PATH="$HOME/Projects/dotfiles"
+export DOTFILES_PATH="$HOME/.dotfiles"
 source $DOTFILES_PATH/lib/aliases/loader.sh
