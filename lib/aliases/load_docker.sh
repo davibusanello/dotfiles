@@ -13,10 +13,10 @@ IMG_PHP="php:7.0-alpine3.7"
 
 
 function composer () {
+        # --user $(id -u):$(id -g) \
     docker container run -it --rm \
         --name=composer \
         -v $COMPOSER_HOME:/tmp \
-        --user $(id -u):$(id -g) \
         --volume $PWD:/app \
         --volume /etc/passwd:/etc/passwd:ro \
         --volume /etc/group:/etc/group:ro \
