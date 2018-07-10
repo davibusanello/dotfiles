@@ -106,6 +106,8 @@ fi
 
 export HISTSIZE=3000
 export SAVEHIST=3000
+# History display line and date time
+export HISTTIMEFORMAT='%F %T '
 export PAGER=less
 export LESS="-F -X $LESS"
 export PSQL_EDITOR=/usr/bin/vim
