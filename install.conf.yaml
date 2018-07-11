@@ -1,0 +1,8 @@
+- defaults:
+    link:
+      relink: true
+- clean: ['~']
+- link:
+    ~/.zshrc: .zshrc
+    ~/.gitconfig: .gitconfig
+    ~/Projects: ~/Dropbox/Projects
