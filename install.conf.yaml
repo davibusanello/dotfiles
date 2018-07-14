@@ -7,3 +7,6 @@
     ~/.zshrc: .zshrc
     ~/.gitconfig: .gitconfig
     ~/Projects: ~/Dropbox/Projects
+- shell:
+  - [git submodule update --init --recursive, Installing submodules]
+  - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
