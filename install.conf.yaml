@@ -17,6 +17,9 @@
     ~/.gitconfig: .gitconfig
     ~/Projects: ~/Dropbox/Projects
     ~/.composer/composer.json: dev-envs/php/composer.json
+    ~/Downloads:
+        force: true
+        path: /run/media/davi/MyData/Downloads
 - shell:
     - [git submodule update --init --recursive, Installing submodules]
     - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
