@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Script to add my partitions from the second HDD to fstab
+# and mount on startup
+mkdir -p /run/media/davi/MyData
+chown -R davi. /run/media/davi
+cp /etc/fstab $(dirname "$0")/fstab.orig
+echo "UUID=$(lsblk -no UUID /dev/sdc7) /run/media/davi/MyData $(lsblk -no FSTYPE /dev/sdc7) defaults,noatime 0 2" >> /etc/fstab
+mount -a
