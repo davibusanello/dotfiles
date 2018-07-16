@@ -1,10 +1,11 @@
 - defaults:
     link:
-        relink: true
         create: true
+        relink: true
+        relative:  true
 - shell:
     -
-        description: "Adding MyData to fstab..."
+        description: "Adding partitions to fstab..."
         command: "sudo ./bin/system/fstab"
         stdout: true
         stderr: true
