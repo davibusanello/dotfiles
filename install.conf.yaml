@@ -1,6 +1,14 @@
 - defaults:
     link:
-      relink: true
+        relink: true
+        create: true
+- shell:
+    -
+        description: "Adding MyData to fstab..."
+        command: "sudo ./bin/system/fstab"
+        stdout: true
+        stderr: true
+        stdin: true
 - clean: ['~']
 - link:
     ~/.dotfiles: ''
@@ -8,5 +16,5 @@
     ~/.gitconfig: .gitconfig
     ~/Projects: ~/Dropbox/Projects
 - shell:
-  - [git submodule update --init --recursive, Installing submodules]
-  - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
+    - [git submodule update --init --recursive, Installing submodules]
+    - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
