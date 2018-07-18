@@ -15,7 +15,7 @@ POWERLEVEL9K_MODE='awesome-fontconfig'
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir dir_writable vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time root_indicator background_jobs history time ip public_ip ssh)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time root_indicator background_jobs ssh public_ip history time)
 ZSH_THEME="powerlevel9k/powerlevel9k"
 
 # Uncomment the following line to use case-sensitive completion.
@@ -62,7 +62,9 @@ HIST_STAMPS="mm/dd/yyyy"
 # Add wisely, as too many plugins slow down shell startup.
 # Using in docker
 #  ruby rails gem bundler command-not-found
-plugins=(git completion composer common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn)
+# Codestats key
+CODESTATS_API_KEY="SFMyNTY.WkdGMmFXSjFjMkZ1Wld4c2J3PT0jI01qZzVNQT09.R06e6aGRfNqfQ7odzTWnm_v40zbwQjN0Pz330DFZOJ4"
+plugins=(git completion composer common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn codestats)
 
 # User configuration
 
@@ -104,8 +106,8 @@ if [ $TILIX_ID ] || [ $VTE_VERSION ]; then
         source /etc/profile.d/vte.sh
 fi
 
-export HISTSIZE=3000
-export SAVEHIST=3000
+export HISTSIZE=5000
+export SAVEHIST=10000
 # History display line and date time
 export HISTTIMEFORMAT='%F %T '
 export PAGER=less
