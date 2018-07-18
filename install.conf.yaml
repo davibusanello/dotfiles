@@ -4,6 +4,7 @@
         relink: true
         relative:  true
 - shell:
+    - [git submodule update --init --recursive, Installing submodules]
     -
         description: "Adding partitions to fstab..."
         command: "sudo ./bin/system/fstab"
@@ -13,13 +14,23 @@
 - clean: ['~']
 - link:
     ~/.dotfiles: ''
+    # SHELL
+    ~/.oh-my-zsh/custom/plugins/codestats: shell/code-stats-zsh
     ~/.zshrc: .zshrc
+    # GIT
     ~/.gitconfig: .gitconfig
-    ~/Projects: ~/Dropbox/Projects
+    # Lang Environments
     ~/.composer/composer.json: dev-envs/php/composer.json
+    # Dir
+    ~/Projects: ~/Dropbox/Projects
+    # Downloads linked to HDD
     ~/Downloads:
         force: true
+        relative: false
         path: /run/media/davi/MyData/Downloads
+    # Projects from 3rd party linked to store in HDD
+    ~/Projects/3rd-party:
+        relative: false
+        path: /run/media/davi/MyData/3rd-party-projects
 - shell:
-    - [git submodule update --init --recursive, Installing submodules]
     - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]

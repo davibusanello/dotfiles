@@ -1,3 +1,6 @@
 [submodule "dotbot"]
 	path = dotbot
 	url = https://github.com/anishathalye/dotbot
+[submodule "shell/code-stats-zsh"]
+	path = shell/code-stats-zsh
+	url = https://gitlab.com/code-stats/code-stats-zsh.git
