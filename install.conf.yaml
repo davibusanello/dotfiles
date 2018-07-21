@@ -32,5 +32,9 @@
     ~/Projects/3rd-party:
         relative: false
         path: /run/media/davi/MyData/3rd-party-projects
+    # Projects for study
+    ~/Projects-studies:
+        relative: false
+        path: /run/media/davi/MyData/Projects_studies
 - shell:
     - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
