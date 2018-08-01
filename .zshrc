@@ -64,7 +64,7 @@ HIST_STAMPS="mm/dd/yyyy"
 #  ruby rails gem bundler command-not-found
 # Codestats key
 CODESTATS_API_KEY="SFMyNTY.WkdGMmFXSjFjMkZ1Wld4c2J3PT0jI01qZzVNQT09.R06e6aGRfNqfQ7odzTWnm_v40zbwQjN0Pz330DFZOJ4"
-plugins=(git completion composer common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn codestats)
+plugins=(git completion composer common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn codestats wakatime)
 
 # User configuration
 
