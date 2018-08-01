@@ -37,5 +37,16 @@
     ~/Projects-studies:
         relative: false
         path: /run/media/davi/MyData/Projects_studies
+# Python
+- pip:
+    file: dev-envs/python/requirements3.txt
+    binary: /usr/bin/pip3
+    user: true
+    stdout: false
+    stderr: true
+- pipsi:
+    file: dev-envs/python/requirements-pipsi.txt
+    stdout: false
+    stderr: true
 - shell:
     - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]

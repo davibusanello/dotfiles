@@ -1,0 +1,3 @@
+pylint
+wakatime
+pgcli
