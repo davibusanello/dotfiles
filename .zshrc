@@ -125,15 +125,17 @@ export PSQL_EDITOR=/usr/bin/vim
 #POWERLEVEL9K_MODE='awesome-patched'
 
 #export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
-#Setting the GEM_PATH and GEM_HOME variables may not be necessary, check 'gem env' output to verify whether both variables already exist 
+#Setting the GEM_PATH and GEM_HOME variables may not be necessary, check 'gem env' output to verify whether both variables already exist
 # GEM_HOME=$(ls -t -U | ruby -e 'puts Gem.user_dir')
 # GEM_PATH=$GEM_HOME/bin
 COMPOSER_HOME=$HOME/.composer
 COMPOSER_PATH=$COMPOSER_PATH/vendor/bin
 NPM_PATH=$(npm bin)
 YARN_HOME=$(yarn global dir)
+YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
 YARN_PATH=$HOME/.yarn/bin
-export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$NPM_PATH
+USER_LOCAL_BIN=$HOME/.local/bin
+export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN
 
 # My personal aliases librar
 export DOTFILES_PATH="$HOME/.dotfiles"
