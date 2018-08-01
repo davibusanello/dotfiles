@@ -49,4 +49,5 @@
     stdout: false
     stderr: true
 - shell:
+    - [dconf dump /com/gexperts/Tilix/ > tilix/tilix.dconf.orig, Backing up Tilix Configuration]
     - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
