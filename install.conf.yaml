@@ -16,6 +16,7 @@
     ~/.dotfiles: ''
     # SHELL
     ~/.oh-my-zsh/custom/plugins/codestats: shell/code-stats-zsh
+    ~/.oh-my-zsh/custom/plugins/wakatime-zsh-plugin: shell/wakatime-zsh-plugin
     ~/.zshrc: .zshrc
     # GIT
     ~/.gitconfig: .gitconfig
