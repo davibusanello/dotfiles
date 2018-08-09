@@ -23,7 +23,7 @@
     # GIT
     ~/.gitconfig: .gitconfig
     # Lang Environments
-    ~/.composer/composer.json: dev-envs/php/composer.json
+    ~/.composer: dev-envs/php/composer
     # Dir
     ~/Projects: ~/Dropbox/Projects
     # Downloads linked to HDD
