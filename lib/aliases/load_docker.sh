@@ -1,25 +1,37 @@
 # Aliases for environments running inside docker containers
-# Ready images
-# REPOSITORY:TAG          
-# composer:1.6          
-# php:7.0-alpine3.7
-# php:7.1-alpine3.7
-# php:7.2-alpine3.7
-# postgres:10-alpine    
+# Default and common Functions
+function _default_docker_validations() {
+    if [ "$#" -lt 1 ]; then
+        echo  "Please insert at least one argument"
+        exit 1
+    fi
+}
 
-# PHP
-IMG_COMPOSER="composer:1.6"
-IMG_PHP="php:7.0-alpine3.7"
+# Environment specific functions to use
+# from inside Docker container like it was local
 
-
+# PHP Composer
 function composer () {
-        # --user $(id -u):$(id -g) \
+    echo "Running inside docker.."
     docker container run -it --rm \
         --name=composer \
+        --user $(id -u):$(id -g) \
         -v $COMPOSER_HOME:/tmp \
         --volume $PWD:/app \
         --volume /etc/passwd:/etc/passwd:ro \
         --volume /etc/group:/etc/group:ro \
-        $IMG_COMPOSER "$@"
+        $COMPOSER_DOCKER_IMAGE "$@"
 }
 
+# PHP
+function php_docker () {
+    _default_docker_validations "$@"
+    echo "Running inside docker from image $PHP_DOCKER_IMAGE ..."
+    docker container run -it --rm \
+        --user $(id -u):$(id -g) \
+        -v $COMPOSER_HOME:/tmp \
+        --volume $PWD:/app \
+        --volume /etc/passwd:/etc/passwd:ro \
+        --volume /etc/group:/etc/group:ro \
+        $PHP_DOCKER_IMAGE php "$@"
+}
