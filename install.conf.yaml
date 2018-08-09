@@ -23,7 +23,9 @@
     # GIT
     ~/.gitconfig: .gitconfig
     # Lang Environments
+    # PHP
     ~/.composer: dev-envs/php/composer
+    ~/.local/bin/php: shell/scripts/php.sh
     # Dir
     ~/Projects: ~/Dropbox/Projects
     # Downloads linked to HDD
