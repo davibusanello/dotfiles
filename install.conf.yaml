@@ -20,6 +20,9 @@
     ~/.oh-my-zsh/custom/plugins/wakatime-zsh-plugin: shell/wakatime-zsh-plugin
     ~/.local/bin/touchpad_toggle: bin/system/touchpad_toggle.sh
     ~/.zshrc: .zshrc
+    ~/.profile:
+        force: true
+        path: .profile
     # GIT
     ~/.gitconfig: .gitconfig
     # Lang Environments
