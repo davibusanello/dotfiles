@@ -29,6 +29,8 @@
     # PHP
     ~/.composer: dev-envs/php/composer
     ~/.local/bin/php: shell/scripts/php.sh
+    # JS
+    ~/.config/yarn/global/package.json: dev-envs/js/package.json
     # Dir
     ~/Projects: ~/Dropbox/Projects
     # Downloads linked to HDD
