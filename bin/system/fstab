@@ -14,9 +14,14 @@ PARTITION_MOUNT_PATH='/run/media'
 HAS_CHANGES=0
 NEW_FSTAB_LINES=()
 NEW_DIRECTORIES=()
+MACHINE=$(uname -n)
 
 # Add partition below duplicating this line
-addPartitionToFstab '/dev/sdc7' 'MyData'
+case "$MACHINE" in
+    'wow') addPartitionToFstab '/dev/sdc7' 'MyData'
+        ;;
+esac
+
 
 # Execute the changes in fstab
 executeFstabChanges
