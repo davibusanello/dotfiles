@@ -10,3 +10,6 @@
 [submodule "dotbot-pip"]
 	path = dotbot-pip
 	url = https://github.com/sobolevn/dotbot-pip.git
+[submodule "shell/zsh/powerlevel9k"]
+	path = shell/zsh/powerlevel9k
+	url = https://github.com/bhilburn/powerlevel9k.git
