@@ -6,6 +6,12 @@
 - shell:
     - [git submodule update --init --recursive, Installing submodules]
     -
+        description: "Installing Oh My Zsh"
+        command: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"'
+        stdout: true
+        stderr: true
+        stdin: true
+    -
         description: "Adding partitions to fstab..."
         command: "sudo ./bin/system/fstab"
         stdout: true
