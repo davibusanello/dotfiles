@@ -40,6 +40,10 @@
     ~/.gnupg:
         force: true
         path: ~/Dropbox/configs/gnupg
+    # SSH
+    ~/.ssh:
+        force: true
+        path: ~/Dropbox/configs/ssh
     # Lang Environments
     # PHP
     ~/.composer: dev-envs/php/composer
@@ -54,13 +58,13 @@
         relative: false
         path: /run/media/davi/MyData/Downloads
     # Projects from 3rd party linked to store in HDD
-    ~/Projects/3rd-party:
+    ~/Projects-common/3rd-party:
         relative: false
-        path: /run/media/davi/MyData/3rd-party-projects
+        path: /run/media/davi/MyData/Projects/3rd-party
     # Projects for study
-    ~/Projects-studies:
+    ~/Projects-common/studies:
         relative: false
-        path: /run/media/davi/MyData/Projects_studies
+        path: /run/media/davi/MyData/Projects/studies
 # Python
 - pip:
     file: dev-envs/python/requirements3.txt
