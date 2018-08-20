@@ -139,5 +139,4 @@ USER_LOCAL_BIN=$HOME/.local/bin
 export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN
 
 # My personal aliases librar
-export DOTFILES_PATH="$HOME/.dotfiles"
 source $DOTFILES_PATH/lib/aliases/loader.sh
