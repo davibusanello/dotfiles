@@ -22,15 +22,24 @@
 - link:
     ~/.dotfiles: ''
     # SHELL
+    ~/.oh-my-zsh/custom/themes/powerlevel9k: shell/zsh/powerlevel9k
     ~/.oh-my-zsh/custom/plugins/codestats: shell/code-stats-zsh
     ~/.oh-my-zsh/custom/plugins/wakatime-zsh-plugin: shell/wakatime-zsh-plugin
     ~/.local/bin/touchpad_toggle: bin/system/touchpad_toggle.sh
-    ~/.zshrc: .zshrc
+    ~/.zshrc:
+        force: true
+        path: .zshrc
     ~/.profile:
         force: true
         path: .profile
     # GIT
     ~/.gitconfig: .gitconfig
+    # Wakatime
+    ~/.wakatime.cfg: .wakatime.cfg
+    # PGP
+    ~/.gnupg:
+        force: true
+        path: ~/Dropbox/configs/gnupg
     # Lang Environments
     # PHP
     ~/.composer: dev-envs/php/composer
