@@ -17,6 +17,12 @@
         stdout: true
         stderr: true
         stdin: true
+    -
+        description: "Disabled auto enable bluetooth on startup"
+        command: "sudo sed -i 's/#AutoEnable=false/AutoEnable=false/g' /etc/bluetooth/main.conf && gsettings set org.blueman.plugins.powermanager auto-power-on false"
+        stdout: true
+        stderr: true
+        stdin: true
 - clean: ['~']
 - clean: ['/usr/local/bin/touchpad_toggle']
 - link:
