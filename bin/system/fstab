@@ -20,6 +20,8 @@ MACHINE=$(uname -n)
 case "$MACHINE" in
     'wow') addPartitionToFstab '/dev/sdc7' 'MyData'
         ;;
+    'omg') addPartitionToFstab '/dev/sda8' 'MyData'
+        ;;
 esac
 
 
