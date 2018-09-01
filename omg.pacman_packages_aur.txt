@@ -21,3 +21,4 @@ visual-studio-code-bin 1.26.1-2
 vte-tilix-common 0.52.2-1
 vte3-tilix 0.52.2-1
 zoom 2.3.128305.0716-1
+docker-credential-pass
