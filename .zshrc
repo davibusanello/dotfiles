@@ -136,7 +136,10 @@ YARN_HOME=$(yarn global dir)
 YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
 YARN_PATH=$HOME/.yarn/bin
 USER_LOCAL_BIN=$HOME/.local/bin
-export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN
+RUBYGEMS_2_5_PATH=$HOME/.gem/ruby/2.5.0/bin
+export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH
 
+# Enables iex shell history
+export ERL_AFLAGS="-kernel shell_history enabled"
 # My personal aliases librar
 source $DOTFILES_PATH/lib/aliases/loader.sh
