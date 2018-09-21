@@ -50,6 +50,10 @@
     ~/.ssh:
         force: true
         path: ~/Dropbox/configs/ssh
+    # Touchpad gestures
+    ~/.config/libinput-gestures.conf:
+        force: true
+        path: libinput-gestures.conf
     # Lang Environments
     # PHP
     ~/.composer: dev-envs/php/composer
@@ -85,3 +89,4 @@
 - shell:
     - [dconf dump /com/gexperts/Tilix/ > tilix/tilix.dconf.orig, Backing up Tilix Configuration]
     - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
+    - [libinput-gestures-setup restart, Load touchpad gestures]
