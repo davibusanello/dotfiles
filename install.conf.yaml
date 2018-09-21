@@ -39,7 +39,8 @@
         force: true
         path: .profile
     # GIT
-    ~/.gitconfig: .gitconfig
+    ~/.gitconfig: git/.gitconfig
+    ~/.gitignore_global: git/.gitignore_global
     # Wakatime
     ~/.wakatime.cfg: .wakatime.cfg
     # PGP
