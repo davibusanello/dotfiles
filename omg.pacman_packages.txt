@@ -53,3 +53,4 @@ npm
 seahorse
 vim
 pass
+linux-headers
