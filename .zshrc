@@ -14,6 +14,8 @@
 POWERLEVEL9K_MODE='awesome-fontconfig'
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
+POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
+POWERLEVEL9K_SHORTEN_STRATEGY=truncate_middle
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir dir_writable vcs)
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time root_indicator background_jobs ssh public_ip history time)
 ZSH_THEME="powerlevel9k/powerlevel9k"
@@ -63,8 +65,8 @@ HIST_STAMPS="mm/dd/yyyy"
 # Using in docker
 #  ruby rails gem bundler command-not-found
 # Codestats key
-CODESTATS_API_KEY="SFMyNTY.WkdGMmFXSjFjMkZ1Wld4c2J3PT0jI01qZzVNQT09.R06e6aGRfNqfQ7odzTWnm_v40zbwQjN0Pz330DFZOJ4"
-plugins=(git completion composer common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn codestats wakatime)
+CODESTATS_API_KEY="SFMyNTY.WkdGMmFXSjFjMkZ1Wld4c2J3PT0jI016RTBOZz09.EYFFfKONQlA7VBr3qnF67CcMR8Xc6H7yEQgIS4y6GBw"
+plugins=(git completion common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn wakatime mix zsh_reload gulp)
 
 # User configuration
 
