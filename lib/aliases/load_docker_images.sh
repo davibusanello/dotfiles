@@ -23,3 +23,4 @@
 # PHP ENV
 COMPOSER_DOCKER_IMAGE="composer:1.7"
 PHP_DOCKER_IMAGE="php:7.2-fpm-alpine3.7"
+RUBY_DOCKER_IMAGE="ruby:2.5-alpine3.7"

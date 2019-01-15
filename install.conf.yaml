@@ -39,7 +39,8 @@
         force: true
         path: .profile
     # GIT
-    ~/.gitconfig: .gitconfig
+    ~/.gitconfig: git/.gitconfig
+    ~/.gitignore_global: git/.gitignore_global
     # Wakatime
     ~/.wakatime.cfg: .wakatime.cfg
     # PGP
@@ -50,7 +51,13 @@
     ~/.ssh:
         force: true
         path: ~/Dropbox/configs/ssh
+    # Touchpad gestures
+    ~/.config/libinput-gestures.conf:
+        force: true
+        path: libinput-gestures.conf
     # Lang Environments
+    # Editorconfig
+    ~/.editorconfig: dev-envs/.editorconfig
     # PHP
     ~/.composer: dev-envs/php/composer
     ~/.local/bin/php: shell/scripts/php.sh
@@ -85,3 +92,4 @@
 - shell:
     - [dconf dump /com/gexperts/Tilix/ > tilix/tilix.dconf.orig, Backing up Tilix Configuration]
     - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
+    - [libinput-gestures-setup restart, Load touchpad gestures]
