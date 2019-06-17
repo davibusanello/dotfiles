@@ -17,7 +17,7 @@ POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
 POWERLEVEL9K_SHORTEN_STRATEGY=truncate_middle
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir dir_writable vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time root_indicator background_jobs ssh public_ip history time)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time root_indicator background_jobs ssh history time)
 ZSH_THEME="powerlevel9k/powerlevel9k"
 
 # Uncomment the following line to use case-sensitive completion.
@@ -66,7 +66,7 @@ HIST_STAMPS="mm/dd/yyyy"
 #  ruby rails gem bundler command-not-found
 # Codestats key
 CODESTATS_API_KEY="SFMyNTY.WkdGMmFXSjFjMkZ1Wld4c2J3PT0jI016RTBOZz09.EYFFfKONQlA7VBr3qnF67CcMR8Xc6H7yEQgIS4y6GBw"
-plugins=(git completion common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nodejs npm yarn wakatime mix zsh_reload gulp)
+plugins=(git common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck npm yarn mix zsh_reload)
 
 # User configuration
 
@@ -139,7 +139,8 @@ YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
 YARN_PATH=$HOME/.yarn/bin
 USER_LOCAL_BIN=$HOME/.local/bin
 RUBYGEMS_2_5_PATH=$HOME/.gem/ruby/2.5.0/bin
-export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH
+ELIXIR_PATH=$(which elixir)
+export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH:$ELIXIR_PATH
 
 # Enables iex shell history
 export ERL_AFLAGS="-kernel shell_history enabled"
