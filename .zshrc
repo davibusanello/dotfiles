@@ -66,7 +66,8 @@ HIST_STAMPS="mm/dd/yyyy"
 #  ruby rails gem bundler command-not-found
 # Codestats key
 CODESTATS_API_KEY="SFMyNTY.WkdGMmFXSjFjMkZ1Wld4c2J3PT0jI016RTBOZz09.EYFFfKONQlA7VBr3qnF67CcMR8Xc6H7yEQgIS4y6GBw"
-plugins=(git common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck npm yarn mix zsh_reload)
+
+plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails  mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting )
 
 # User configuration
 
@@ -134,15 +135,51 @@ COMPOSER_HOME=$HOME/.composer
 COMPOSER_PATH=$COMPOSER_HOME/vendor/bin
 NPM_USER_BIN="$NPM_CONFIG_PREFIX/bin"
 NPM_PATH=$(npm bin)
-YARN_HOME=$(yarn global dir)
-YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
-YARN_PATH=$HOME/.yarn/bin
+#YARN_HOME=$(yarn global dir)
+#YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
+#YARN_PATH=$HOME/.yarn/bin
 USER_LOCAL_BIN=$HOME/.local/bin
-RUBYGEMS_2_5_PATH=$HOME/.gem/ruby/2.5.0/bin
+#RUBYGEMS_2_5_PATH=$HOME/.gem/ruby/2.5.0/bin
 ELIXIR_PATH=$(which elixir)
-export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH:$ELIXIR_PATH
+#export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH:$ELIXIR_PATH
+export PATH=$PATH:$COMPOSER_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$ELIXIR_PATH
 
 # Enables iex shell history
 export ERL_AFLAGS="-kernel shell_history enabled"
 # My personal aliases librar
 source $DOTFILES_PATH/lib/aliases/loader.sh
+#export PATH="$HOME/.rbenv/bin:$PATH"
+#eval "$(rbenv init -)"
+#source /usr/share/nvm/init-nvm.sh
+
+CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
+export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
+unalias fd
+export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
+export FZF_DEFAULT_COMMAND="rg --files --line-number"
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# place this after nvm initialization!
+autoload -U add-zsh-hook
+load-nvmrc() {
+  local node_version="$(nvm version)"
+  local nvmrc_path="$(nvm_find_nvmrc)"
+
+  if [ -n "$nvmrc_path" ]; then
+    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+
+    if [ "$nvmrc_node_version" = "N/A" ]; then
+      nvm install
+    elif [ "$nvmrc_node_version" != "$node_version" ]; then
+      nvm use
+    fi
+  elif [ "$node_version" != "$(nvm version default)" ]; then
+    echo "Reverting to nvm default version"
+    nvm use default
+  fi
+}
+add-zsh-hook chpwd load-nvmrc
+load-nvmrc
+
+eval "$(direnv hook zsh)"
+
