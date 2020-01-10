@@ -22,3 +22,6 @@
 [submodule "shell/zsh-history-substring-search"]
 	path = shell/zsh-history-substring-search
 	url = https://github.com/zsh-users/zsh-history-substring-search.git
+[submodule "shell/zsh/zsh-interactive-cd"]
+	path = shell/zsh/zsh-interactive-cd
+	url = https://github.com/changyuheng/zsh-interactive-cd.git
