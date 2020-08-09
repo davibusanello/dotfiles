@@ -1,0 +1,48 @@
+- defaults:
+    link:
+        create: true
+        relink: true
+        relative:  true
+- shell:
+    - [git submodule update --init --recursive, Installing submodules]
+    -
+        description: "Installing Oh My Zsh"
+        command: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"'
+        stdout: true
+        stderr: true
+        stdin: true
+- clean: ['~']
+- link:
+    ~/.dotfiles: ''
+    # SHELL
+    ~/.oh-my-zsh/custom/themes/powerlevel9k: shell/zsh/powerlevel9k
+    ~/.oh-my-zsh/custom/plugins/codestats: shell/code-stats-zsh
+    ~/.oh-my-zsh/custom/plugins/wakatime-zsh-plugin: shell/wakatime-zsh-plugin
+    ~/.local/bin/touchpad_toggle: bin/system/touchpad_toggle.sh
+    ~/.zshrc:
+        force: true
+        path: .zshrc
+    ~/.profile:
+        force: true
+        path: .profile
+    # GIT
+    ~/.gitconfig: git/.gitconfig
+    ~/.gitignore_global: git/.gitignore_global
+    # Wakatime
+    ~/.wakatime.cfg: .wakatime.cfg
+    # Lang Environments
+    # Editorconfig
+    ~/.editorconfig: dev-envs/.editorconfig
+    # JS
+    ~/.config/yarn/global/package.json: dev-envs/js/package.json
+# Python
+- pip:
+    file: dev-envs/python/requirements3.txt
+    binary: /usr/bin/pip3
+    user: true
+    stdout: false
+    stderr: true
+- pipsi:
+    file: dev-envs/python/requirements-pipsi.txt
+    stdout: false
+    stderr: true
