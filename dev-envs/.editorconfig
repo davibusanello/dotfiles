@@ -27,7 +27,7 @@ indent_size = 4
 indent_style = space
 indent_size = 2
 
-[*.{js,json,ts,jade}]
+[*.{js,json,ts,jade,rb}]
 indent_size = 2
 
 # Mozilla

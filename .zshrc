@@ -2,8 +2,8 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-  export ZSH=$HOME/.oh-my-zsh
-  export TERM='xterm-256color'
+export ZSH=$HOME/.oh-my-zsh
+export TERM='xterm-256color'
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
@@ -11,7 +11,7 @@
 #ZSH_THEME="agnoster"
 
 # POWERLEVEL9K_MODE='nerdfont-complete'
-POWERLEVEL9K_MODE='awesome-fontconfig'
+# POWERLEVEL9K_MODE='awesome-fontconfig'
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
@@ -53,7 +53,7 @@ export UPDATE_ZSH_DAYS=7
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
 # The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-HIST_STAMPS="mm/dd/yyyy"
+export HIST_STAMPS="mm/dd/yyyy"
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -65,9 +65,9 @@ HIST_STAMPS="mm/dd/yyyy"
 # Using in docker
 #  ruby rails gem bundler command-not-found
 # Codestats key
-CODESTATS_API_KEY="SFMyNTY.WkdGMmFXSjFjMkZ1Wld4c2J3PT0jI016RTBOZz09.EYFFfKONQlA7VBr3qnF67CcMR8Xc6H7yEQgIS4y6GBw"
+CODESTATS_API_KEY=""
 
-plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails  mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting )
+plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust cargo per-directory-history cp zsh-interactive-cd)
 
 # User configuration
 
@@ -127,22 +127,32 @@ export PSQL_EDITOR=/usr/bin/vim
 
 #POWERLEVEL9K_MODE='awesome-patched'
 
-#export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
+# Identify and load OS specific shell scripts
+if [ -z "$DOTFILES_PATH" ]; then
+    export DOTFILES_PATH="$HOME/.dotfiles"
+fi
+source $DOTFILES_PATH/lib/os_identifier.sh
+
+# export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 #Setting the GEM_PATH and GEM_HOME variables may not be necessary, check 'gem env' output to verify whether both variables already exist
 # GEM_HOME=$(ls -t -U | ruby -e 'puts Gem.user_dir')
 # GEM_PATH=$GEM_HOME/bin
-COMPOSER_HOME=$HOME/.composer
-COMPOSER_PATH=$COMPOSER_HOME/vendor/bin
-NPM_USER_BIN="$NPM_CONFIG_PREFIX/bin"
-NPM_PATH=$(npm bin)
-#YARN_HOME=$(yarn global dir)
-#YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
-#YARN_PATH=$HOME/.yarn/bin
+# COMPOSER_HOME=$HOME/.composer
+# COMPOSER_PATH=$COMPOSER_HOME/vendor/bin
+# NPM_USER_BIN="$NPM_CONFIG_PREFIX/bin"
+# NPM_PATH=$(npm bin)
+# YARN_HOME=$(yarn global dir)
+# YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
+# YARN_PATH=$HOME/.yarn/bin
 USER_LOCAL_BIN=$HOME/.local/bin
 #RUBYGEMS_2_5_PATH=$HOME/.gem/ruby/2.5.0/bin
-ELIXIR_PATH=$(which elixir)
-#export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH:$ELIXIR_PATH
-export PATH=$PATH:$COMPOSER_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$ELIXIR_PATH
+# ELIXIR_PATH=$(which elixir)
+# export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH:$ELIXIR_PATH
+# export PATH=$PATH:$COMPOSER_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$ELIXIR_PATH
+export PATH=$PATH:$USER_LOCAL_BIN
+
+# Rust environment
+export PATH=$PATH:$HOME/.cargo/bin
 
 # Enables iex shell history
 export ERL_AFLAGS="-kernel shell_history enabled"
@@ -153,11 +163,16 @@ source $DOTFILES_PATH/lib/aliases/loader.sh
 #source /usr/share/nvm/init-nvm.sh
 
 CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
-export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
+MY_PYTHON_38_PATH="$HOME/Library/Python/3.8/bin"
+export PATH=$PATH:$CURRENT_RUBYGEMS_PATH:$MY_PYTHON_38_PATH
 unalias fd
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+:
+export NVM_DIR="$HOME/.nvm"
+[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # place this after nvm initialization!
 autoload -U add-zsh-hook
@@ -182,4 +197,13 @@ add-zsh-hook chpwd load-nvmrc
 load-nvmrc
 
 eval "$(direnv hook zsh)"
+export LC_ALL="en_US.UTF-8"
+gpgconf --launch gpg-agent
+
+# source "$(navi widget zsh)"
+source <(navi widget zsh)
+export HISTTIMEFORMAT='%F %T '
+# Keep it at the ending of the file
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
