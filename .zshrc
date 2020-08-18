@@ -67,7 +67,7 @@ export HIST_STAMPS="mm/dd/yyyy"
 # Codestats key
 CODESTATS_API_KEY=""
 
-plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust cargo per-directory-history cp zsh-interactive-cd)
+plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust cargo per-directory-history cp zsh-interactive-cd pyenv)
 
 # User configuration
 
