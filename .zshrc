@@ -163,18 +163,15 @@ source $DOTFILES_PATH/lib/aliases/loader.sh
 #source /usr/share/nvm/init-nvm.sh
 
 CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
-MY_PYTHON_38_PATH="$HOME/Library/Python/3.8/bin"
-export PATH=$PATH:$CURRENT_RUBYGEMS_PATH:$MY_PYTHON_38_PATH
+export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
 unalias fd
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 :
 export NVM_DIR="$HOME/.nvm"
-[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
-# place this after nvm initialization!
+# Auto switch node version
 autoload -U add-zsh-hook
 load-nvmrc() {
   local node_version="$(nvm version)"
@@ -200,7 +197,7 @@ eval "$(direnv hook zsh)"
 export LC_ALL="en_US.UTF-8"
 gpgconf --launch gpg-agent
 
-# source "$(navi widget zsh)"
+# CLI cheatsheets
 source <(navi widget zsh)
 export HISTTIMEFORMAT='%F %T '
 # Keep it at the ending of the file
