@@ -10,8 +10,7 @@ export TERM='xterm-256color'
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 #ZSH_THEME="agnoster"
 
-# POWERLEVEL9K_MODE='nerdfont-complete'
-# POWERLEVEL9K_MODE='awesome-fontconfig'
+POWERLEVEL9K_MODE='nerdfont-complete'
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=3
@@ -152,7 +151,9 @@ USER_LOCAL_BIN=$HOME/.local/bin
 export PATH=$PATH:$USER_LOCAL_BIN
 
 # Rust environment
-export PATH=$PATH:$HOME/.cargo/bin
+source $HOME/.cargo/env
+MYBIN=$HOME/bin
+export PATH=$PATH:$MYBIN
 
 # Enables iex shell history
 export ERL_AFLAGS="-kernel shell_history enabled"
@@ -164,7 +165,6 @@ source $DOTFILES_PATH/lib/aliases/loader.sh
 
 CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
 export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
-unalias fd
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"

@@ -9,4 +9,4 @@ export LC_ALL="en_US.UTF-8"
 export LC_CTYPE="en_US.UTF-8"
 
 # Adds Rust cargo to path
-export PATH="$HOME/.cargo/bin:$PATH"
+source "$HOME/.cargo/env"

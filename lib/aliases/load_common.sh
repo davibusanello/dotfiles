@@ -30,3 +30,5 @@ alias subl='subl3'
 
 # Tree Colorized, all files, follow symbolic links, list 3 levels
 alias tree='tree -CalL 3 --dirsfirst'
+
+function gi() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@ ;}
