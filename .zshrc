@@ -66,7 +66,7 @@ export HIST_STAMPS="mm/dd/yyyy"
 # Codestats key
 CODESTATS_API_KEY=""
 
-plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust cargo per-directory-history cp zsh-interactive-cd pyenv)
+plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose nvm npm yarn rbenv gem bundler rails mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust cargo per-directory-history cp zsh-interactive-cd python virtualenv pyenv pipenv asdf)
 
 # User configuration
 
@@ -79,9 +79,9 @@ source $ZSH/oh-my-zsh.sh
 
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='vim'
+    export EDITOR='vim'
 else
-  export EDITOR='vim'
+    export EDITOR='vim'
 fi
 export VISUAL="vim"
 
@@ -105,7 +105,7 @@ alias ohmyzsh="vim ~/.oh-my-zsh"
 #Personal
 #source /etc/profile.d/vte-2.91.sh
 if [ $TILIX_ID ] || [ $VTE_VERSION ]; then
-        source /etc/profile.d/vte.sh
+    source /etc/profile.d/vte.sh
 fi
 
 export HISTSIZE=5000
@@ -174,21 +174,21 @@ export NVM_DIR="$HOME/.nvm"
 # Auto switch node version
 autoload -U add-zsh-hook
 load-nvmrc() {
-  local node_version="$(nvm version)"
-  local nvmrc_path="$(nvm_find_nvmrc)"
+    local node_version="$(nvm version)"
+    local nvmrc_path="$(nvm_find_nvmrc)"
 
-  if [ -n "$nvmrc_path" ]; then
-    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+    if [ -n "$nvmrc_path" ]; then
+        local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
 
-    if [ "$nvmrc_node_version" = "N/A" ]; then
-      nvm install
-    elif [ "$nvmrc_node_version" != "$node_version" ]; then
-      nvm use
+        if [ "$nvmrc_node_version" = "N/A" ]; then
+            nvm install
+        elif [ "$nvmrc_node_version" != "$node_version" ]; then
+            nvm use
+        fi
+    elif [ "$node_version" != "$(nvm version default)" ]; then
+        echo "Reverting to nvm default version"
+        nvm use default
     fi
-  elif [ "$node_version" != "$(nvm version default)" ]; then
-    echo "Reverting to nvm default version"
-    nvm use default
-  fi
 }
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
@@ -198,9 +198,8 @@ export LC_ALL="en_US.UTF-8"
 gpgconf --launch gpg-agent
 
 # CLI cheatsheets
-source <(navi widget zsh)
+# source <(navi widget zsh)
 export HISTTIMEFORMAT='%F %T '
 # Keep it at the ending of the file
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
