@@ -5,33 +5,14 @@
         relative:  true
 - shell:
     - [git submodule update --init --recursive, Installing submodules]
-    -
-        description: "Installing Oh My Zsh"
-        command: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"'
-        stdout: true
-        stderr: true
-        stdin: true
-    -
-        description: "Adding partitions to fstab..."
-        command: "sudo ./bin/system/fstab"
-        stdout: true
-        stderr: true
-        stdin: true
-    -
-        description: "Disabled auto enable bluetooth on startup"
-        command: "sudo sed -i 's/#AutoEnable=false/AutoEnable=false/g' /etc/bluetooth/main.conf && gsettings set org.blueman.plugins.powermanager auto-power-on false"
-        stdout: true
-        stderr: true
-        stdin: true
 - clean: ['~']
-- clean: ['/usr/local/bin/touchpad_toggle']
 - link:
-    ~/.dotfiles: ''
     # SHELL
     ~/.oh-my-zsh/custom/themes/powerlevel9k: shell/zsh/powerlevel9k
     ~/.oh-my-zsh/custom/plugins/codestats: shell/code-stats-zsh
     ~/.oh-my-zsh/custom/plugins/wakatime-zsh-plugin: shell/wakatime-zsh-plugin
-    ~/.local/bin/touchpad_toggle: bin/system/touchpad_toggle.sh
+    ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions: shell/zsh-autosuggestions
+    ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting: shell/zsh-syntax-highlighting
     ~/.zshrc:
         force: true
         path: .zshrc
@@ -43,53 +24,6 @@
     ~/.gitignore_global: git/.gitignore_global
     # Wakatime
     ~/.wakatime.cfg: .wakatime.cfg
-    # PGP
-    ~/.gnupg:
-        force: true
-        path: ~/Dropbox/configs/gnupg
-    # SSH
-    ~/.ssh:
-        force: true
-        path: ~/Dropbox/configs/ssh
-    # Touchpad gestures
-    ~/.config/libinput-gestures.conf:
-        force: true
-        path: libinput-gestures.conf
     # Lang Environments
     # Editorconfig
     ~/.editorconfig: dev-envs/.editorconfig
-    # PHP
-    ~/.composer: dev-envs/php/composer
-    ~/.local/bin/php: shell/scripts/php.sh
-    # JS
-    ~/.config/yarn/global/package.json: dev-envs/js/package.json
-    # Dir
-    ~/Projects: ~/Dropbox/Projects
-    # Downloads linked to HDD
-    ~/Downloads:
-        force: true
-        relative: false
-        path: /run/media/davi/MyData/Downloads
-    # Projects from 3rd party linked to store in HDD
-    ~/Projects-common/3rd-party:
-        relative: false
-        path: /run/media/davi/MyData/Projects/3rd-party
-    # Projects for study
-    ~/Projects-common/studies:
-        relative: false
-        path: /run/media/davi/MyData/Projects/studies
-# Python
-- pip:
-    file: dev-envs/python/requirements3.txt
-    binary: /usr/bin/pip3
-    user: true
-    stdout: false
-    stderr: true
-- pipsi:
-    file: dev-envs/python/requirements-pipsi.txt
-    stdout: false
-    stderr: true
-- shell:
-    - [dconf dump /com/gexperts/Tilix/ > tilix/tilix.dconf.orig, Backing up Tilix Configuration]
-    - [dconf load /com/gexperts/Tilix/ < tilix/tilix.dconf, Setting up Tilix Configuration]
-    - [libinput-gestures-setup restart, Load touchpad gestures]
