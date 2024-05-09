@@ -27,8 +27,11 @@ indent_size = 4
 indent_style = space
 indent_size = 2
 
-[*.{js,json,ts,jade,rb}]
+[*.{js,jsx,json,ts,tsx,jade,rb,slim}]
 indent_size = 2
+
+[*.slim]
+trim_trailing_whitespace = false
 
 # Mozilla
 # https://developer.mozilla.org/en-US/docs/Mozilla/Developer_guide/Coding_Style

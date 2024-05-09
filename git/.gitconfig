@@ -1,5 +1,5 @@
 [user]
-	signingkey = AD43BDC9CCA7E0CF
+	signingKey = AD43BDC9CCA7E0CF
 	name = Davi Busanello
 	email = itsme@davibusanello.net
 [diff]
@@ -57,13 +57,17 @@
     }; \
     f"
 
+    lastcommit = !git rev-list -n 1 HEAD --
+
 [merge]
 	tool = meld
 [commit]
 	gpgsign = true
+;[gpg]
+;	program = /usr/local/bin/gpg
 ; git config --show-origin --get user.email to test
 [includeIf "gitdir/i:~/ToptalProjects/"]
-	path = "~/ToptalProjects/.gitconfig"
+	path = "gitconfig"
 [pull]
 	ff = only
 [init]
@@ -72,3 +76,8 @@
 	program = gpg2
 [diff "sopsdiffer"]
 	textconv = sops -d
+[credential]
+	helper =
+	helper = /usr/local/share/gcm-core/git-credential-manager
+[credential "https://dev.azure.com"]
+	useHttpPath = true

@@ -10,6 +10,7 @@ export LC_CTYPE="en_US.UTF-8"
 
 # Adds Rust cargo to path
 source "$HOME/.cargo/env"
+export PATH="$HOME/.cargo/bin:$PATH"
 
 # Adds Pyenv to shell
 export PYENV_ROOT="$HOME/.pyenv"

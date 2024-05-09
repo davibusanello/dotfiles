@@ -1,6 +1,16 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
+
+# Load autocompletations instaled by brew
+if type brew &>/dev/null
+then
+  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+
+#   autoload -Uz compinit
+#   compinit
+fi
+
 # Path to your oh-my-zsh installation.
 export ZSH=$HOME/.oh-my-zsh
 export TERM='xterm-256color'
@@ -66,7 +76,12 @@ export HIST_STAMPS="mm/dd/yyyy"
 # Codestats key
 CODESTATS_API_KEY=""
 
-plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose nvm npm yarn rbenv gem bundler rails mix zsh_reload fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust cargo per-directory-history cp zsh-interactive-cd python virtualenv pyenv pipenv asdf)
+# Per directory history keybind Ctrl+H
+PER_DIRECTORY_HISTORY_TOGGLE=^H
+HISTIGNORE="&:ls:[bf]g:exit:reset:clear:cd:cd ..:cd..:zh"
+HIST_IGNORE_SPACE="true"
+
+plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust per-directory-history cp zsh-interactive-cd pyenv bundler asdf poetry)
 
 # User configuration
 
@@ -124,8 +139,6 @@ export PSQL_EDITOR=/usr/bin/vim
 #    source /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh
 #fi
 
-#POWERLEVEL9K_MODE='awesome-patched'
-
 # Identify and load OS specific shell scripts
 if [ -z "$DOTFILES_PATH" ]; then
     export DOTFILES_PATH="$HOME/.dotfiles"
@@ -165,6 +178,7 @@ source $DOTFILES_PATH/lib/aliases/loader.sh
 
 CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
 export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
+
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -197,9 +211,26 @@ eval "$(direnv hook zsh)"
 export LC_ALL="en_US.UTF-8"
 gpgconf --launch gpg-agent
 
+# Load custom completions
+fpath+=~/.zfunc
+
 # CLI cheatsheets
 # source <(navi widget zsh)
 export HISTTIMEFORMAT='%F %T '
 # Keep it at the ending of the file
-
+export GPG_TTY=`tty`
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/davibusanello/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/davibusanello/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/davibusanello/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/davibusanello/google-cloud-sdk/completion.zsh.inc'; fi
+eval "$(zellij setup --generate-auto-start zsh)"
+# eval "$(atuin init zsh)"
