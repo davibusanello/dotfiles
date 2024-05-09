@@ -2,9 +2,6 @@
 	path = dotbot
 	url = https://github.com/anishathalye/dotbot
 	ignore = dirty
-[submodule "shell/code-stats-zsh"]
-	path = shell/code-stats-zsh
-	url = https://gitlab.com/code-stats/code-stats-zsh.git
 [submodule "shell/wakatime-zsh-plugin"]
 	path = shell/wakatime-zsh-plugin
 	url = https://github.com/sobolevn/wakatime-zsh-plugin.git
