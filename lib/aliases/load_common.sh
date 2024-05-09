@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #Common aliases
 
 # Extract files based on the extension
@@ -25,10 +26,20 @@ function extract() {
     fi
 }
 
-# Sublime Text alias
-alias subl='subl3'
 
 # Tree Colorized, all files, follow symbolic links, list 3 levels
 alias tree='tree -CalL 3 --dirsfirst'
 
 function gi() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@ ;}
+
+# Fixes poetry instalation after brew update
+function fix_poetry() {
+    #
+    curl -sSL https://install.python-poetry.org | python3 - --uninstall
+    curl -sSL https://install.python-poetry.org | python3
+}
+
+# @todo: Still not working
+# function meld() {
+#     open /Applications/Meld.app $1
+# }

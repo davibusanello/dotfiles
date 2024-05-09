@@ -35,14 +35,16 @@
     ~/.editorconfig: dev-envs/.editorconfig
     # JS
     ~/.config/yarn/global/package.json: dev-envs/js/package.json
+    # Ruby
+    ~/.pryrc: dev-envs/ruby/pryrc
 # Python
-- pip:
-    file: dev-envs/python/requirements3.txt
-    binary: /usr/bin/pip3
-    user: true
-    stdout: false
-    stderr: true
-- pipsi:
-    file: dev-envs/python/requirements-pipsi.txt
-    stdout: false
-    stderr: true
+# - pip:
+#     file: dev-envs/python/requirements3.txt
+#     binary: /usr/bin/pip3
+#     user: true
+#     stdout: false
+#     stderr: true
+# - pipsi:
+#     file: dev-envs/python/requirements-pipsi.txt
+#     stdout: false
+#     stderr: true
