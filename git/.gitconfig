@@ -1,10 +1,11 @@
 [user]
 	signingKey = AD43BDC9CCA7E0CF
 	name = Davi Busanello
-	email = itsme@davibusanello.net
+	email = itsme@davibusanello.me
 [diff]
 	tool = meld
 	noprefix = true
+	wsErrorHighlight = all
 [diffltool]
 	prompt = true
 [difftool "meld"]
@@ -18,6 +19,7 @@
 [core]
 	pager = less -F -X
 	excludesfile = "~/.gitignore_global"
+	attributesfile = "~/.gitattributes"
 [cola]
 	spellcheck = false
 	expandtab = true
@@ -29,7 +31,9 @@
     # Revert last commit
     uncommit = reset --soft HEAD~1
     # Add changes to Stash and apply it back
-    snapshot = !git stash push "snapshot: $(date)" && git stash apply "stash@{0}"
+    snapshot = !git stash push -m \"snapshot: $(date)\" && git stash apply stash@{0}
+    delsnapshot = !git stash drop "stash@{0}"
+
     # Sync the fork repository with the upstream
     syncfork = "!sh $DOTFILES_PATH/git/git_sync_forked_repository.sh"
 
@@ -57,7 +61,8 @@
     }; \
     f"
 
-    lastcommit = !git rev-list -n 1 HEAD --
+    lastcommit = !git rev-list -n 1 HEAD --pretty=format:%s
+    wdiff = diff --word-diff --color-words
 
 [merge]
 	tool = meld
