@@ -28,6 +28,7 @@
     # GIT
     ~/.gitconfig: git/.gitconfig
     ~/.gitignore_global: git/.gitignore_global
+    ~/.gitattributes: git/gitattributes
     # Wakatime
     ~/.wakatime.cfg: .wakatime.cfg
     # Lang Environments
