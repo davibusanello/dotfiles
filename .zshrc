@@ -1,11 +1,9 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
-
 # Load autocompletations instaled by brew
-if type brew &>/dev/null
-then
-  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+if type brew &>/dev/null; then
+    FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
 
 #   autoload -Uz compinit
 #   compinit
@@ -81,7 +79,9 @@ PER_DIRECTORY_HISTORY_TOGGLE=^H
 HISTIGNORE="&:ls:[bf]g:exit:reset:clear:cd:cd ..:cd..:zh"
 HIST_IGNORE_SPACE="true"
 
-plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix fzf fd colored-man-pages zsh-autosuggestions zsh-syntax-highlighting rust per-directory-history cp zsh-interactive-cd pyenv bundler asdf poetry)
+# ZOXIDE_CMD_OVERRIDE
+ZOXIDE_CMD_OVERRIDE="cd"
+plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix fzf colored-man-pages zoxide zsh-autosuggestions zsh-syntax-highlighting rust per-directory-history cp pyenv bundler asdf poetry)
 
 # User configuration
 
@@ -179,13 +179,18 @@ source $DOTFILES_PATH/lib/aliases/loader.sh
 CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
 export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
 
+# Tesseract
+# TODO: Check if this is still needed
+#export TESSDATA_PREFIX="$(brew --prefix)/Cellar/tesseract-lang/4.1.0/share"
+
+# FZF
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 :
 export NVM_DIR="$HOME/.nvm"
 
-# Auto switch node version
+# Auto switch node version (nvm)
 autoload -U add-zsh-hook
 load-nvmrc() {
     local node_version="$(nvm version)"
@@ -207,7 +212,10 @@ load-nvmrc() {
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
 
+# Direnv
 eval "$(direnv hook zsh)"
+
+# GPG
 export LC_ALL="en_US.UTF-8"
 gpgconf --launch gpg-agent
 
@@ -217,20 +225,27 @@ fpath+=~/.zfunc
 # CLI cheatsheets
 # source <(navi widget zsh)
 export HISTTIMEFORMAT='%F %T '
+
 # Keep it at the ending of the file
-export GPG_TTY=`tty`
+export GPG_TTY=$(tty)
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# NVM
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
+# Zellij
+eval "$(zellij setup --generate-auto-start zsh)"
+
+# Atuin
+# eval "$(atuin init zsh)"
+
+# Google Cloud SDK
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/davibusanello/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/davibusanello/google-cloud-sdk/path.zsh.inc'; fi
+if [ -f "${HOME}/google-cloud-sdk/path.zsh.inc" ]; then . "${HOME}/google-cloud-sdk/path.zsh.inc"; fi
 
 # The next line enables shell command completion for gcloud.
-if [ -f '/Users/davibusanello/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/davibusanello/google-cloud-sdk/completion.zsh.inc'; fi
-eval "$(zellij setup --generate-auto-start zsh)"
-# eval "$(atuin init zsh)"
+if [ -f "${HOME}/google-cloud-sdk/completion.zsh.inc" ]; then . "${HOME}/google-cloud-sdk/completion.zsh.inc"; fi
