@@ -65,12 +65,6 @@ export HIST_STAMPS="mm/dd/yyyy"
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 
-# Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
-# Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-# Using in docker
-#  ruby rails gem bundler command-not-found
 # Codestats key
 CODESTATS_API_KEY=""
 
@@ -81,6 +75,11 @@ HIST_IGNORE_SPACE="true"
 
 # ZOXIDE_CMD_OVERRIDE
 ZOXIDE_CMD_OVERRIDE="cd"
+
+# Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
+# Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
 plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose thefuck nvm npm yarn rbenv gem rails mix fzf colored-man-pages zoxide zsh-autosuggestions zsh-syntax-highlighting rust per-directory-history cp pyenv bundler asdf poetry)
 
 # User configuration
@@ -117,7 +116,9 @@ export GPG_TTY=$(tty)
 alias zshconfig="vim ~/.zshrc"
 alias ohmyzsh="vim ~/.oh-my-zsh"
 
-#Personal
+# Personal
+# TODO: It was needed for Tilix when using Linux as main OS
+# TODO: Check if this is still needed
 #source /etc/profile.d/vte-2.91.sh
 if [ $TILIX_ID ] || [ $VTE_VERSION ]; then
     source /etc/profile.d/vte.sh
@@ -131,36 +132,13 @@ export PAGER=less
 export LESS="-F -X $LESS"
 export PSQL_EDITOR=/usr/bin/vim
 
-# export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr
-#   /games:/usr/local/games:/snap/bin"
-
-#Powerline themes
-#if [[ -r /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh ]]; then
-#    source /usr/local/lib/python2.7/dist-packages/powerline/bindings/zsh/powerline.zsh
-#fi
-
 # Identify and load OS specific shell scripts
 if [ -z "$DOTFILES_PATH" ]; then
     export DOTFILES_PATH="$HOME/.dotfiles"
 fi
 source $DOTFILES_PATH/lib/os_identifier.sh
 
-# export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
-#Setting the GEM_PATH and GEM_HOME variables may not be necessary, check 'gem env' output to verify whether both variables already exist
-# GEM_HOME=$(ls -t -U | ruby -e 'puts Gem.user_dir')
-# GEM_PATH=$GEM_HOME/bin
-# COMPOSER_HOME=$HOME/.composer
-# COMPOSER_PATH=$COMPOSER_HOME/vendor/bin
-# NPM_USER_BIN="$NPM_CONFIG_PREFIX/bin"
-# NPM_PATH=$(npm bin)
-# YARN_HOME=$(yarn global dir)
-# YARN_GLOBAL_PATH=$YARN_HOME/node_modules/.bin
-# YARN_PATH=$HOME/.yarn/bin
 USER_LOCAL_BIN=$HOME/.local/bin
-#RUBYGEMS_2_5_PATH=$HOME/.gem/ruby/2.5.0/bin
-# ELIXIR_PATH=$(which elixir)
-# export PATH=$PATH:$COMPOSER_PATH:$YARN_PATH:$YARN_GLOBAL_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$RUBYGEMS_2_5_PATH:$ELIXIR_PATH
-# export PATH=$PATH:$COMPOSER_PATH:$NPM_PATH:$USER_LOCAL_BIN:$NPM_USER_BIN:$ELIXIR_PATH
 export PATH=$PATH:$USER_LOCAL_BIN
 
 # Rust environment
@@ -172,10 +150,9 @@ export PATH=$PATH:$MYBIN
 export ERL_AFLAGS="-kernel shell_history enabled"
 # My personal aliases librar
 source $DOTFILES_PATH/lib/aliases/loader.sh
-#export PATH="$HOME/.rbenv/bin:$PATH"
-#eval "$(rbenv init -)"
-#source /usr/share/nvm/init-nvm.sh
 
+# Ruby gems
+# TODO: Check if this is still needed
 CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
 export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
 
@@ -187,8 +164,6 @@ export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-:
-export NVM_DIR="$HOME/.nvm"
 
 # Auto switch node version (nvm)
 autoload -U add-zsh-hook
