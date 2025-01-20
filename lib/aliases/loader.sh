@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
-# for f in $DOTFILES_PATH/lib/aliases/load_*; do source $f; done
-for f in $(find $DOTFILES_PATH/lib/aliases -iname 'load_*.sh'); do source $f; done
-for f in $(find $DOTFILES_PATH/lib/aliases -iname 'load_*.zsh'); do source $f; done
+
+# Load aliases and utility functions
+# File names are load_<name>.sh or load_<name>.zsh
+# Exception for load__utils.sh which is used for utility functions, which needs to be loaded first
+for f in $(find $DOTFILES_PATH/lib/aliases -iname 'load_*.sh' -o -iname 'load_*.zsh'); do
+    source $f
+done
