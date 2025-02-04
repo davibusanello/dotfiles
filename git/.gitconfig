@@ -3,7 +3,7 @@
 	name = Davi Busanello
 	email = itsme@davibusanello.me
 [diff]
-	tool = meld
+	# tool = meld
 	noprefix = true
 	wsErrorHighlight = all
 [diffltool]
@@ -11,20 +11,28 @@
 [difftool "meld"]
 	trustExitCode = true
 [merge]
-	tool = meld
+	conflictstyle = zdiff3
 [mergetool]
 	prompt = true
 [mergetool "meld"]
 	trustExitCode = true
 [core]
-	pager = less -F -X
+	pager = delta # less -F -X
 	excludesfile = "~/.gitignore_global"
 	attributesfile = "~/.gitattributes"
 [cola]
 	spellcheck = false
 	expandtab = true
 [gui]
-	editor = vim
+	editor = nvim
+[delta]
+	navigate = true
+	dark = true
+	true-color = always
+	side-by-side = true
+	line-numbers = true
+[interactive]
+	diffFilter = delta --color-only
 [alias]
 	tree = "!git log --graph --decorate --pretty=format:'%C(yellow)%h %Cred%cr %Cblue(%an)%C(cyan)%d%Creset %s' --abbrev-commit --all"
     log-my-week = !git log --author $(git config user.email) --since "1 week ago"
