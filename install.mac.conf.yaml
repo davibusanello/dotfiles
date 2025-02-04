@@ -11,6 +11,18 @@
         stdout: true
         stderr: true
         stdin: true
+    -
+        description: "Installing Homebrew"
+        command: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        stdout: true
+        stderr: true
+        stdin: true
+    -
+        description: "Disable the annoying Apple's File Quarantine system-wide"
+        command: 'defaults write com.apple.LaunchServices LSQuarantine -bool false && killall Finder'
+        stdout: true
+        stderr: true
+        stdin: true
 - clean: ['~']
 - link:
     ~/.dotfiles: ''
