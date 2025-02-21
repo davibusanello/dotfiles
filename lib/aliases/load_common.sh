@@ -76,3 +76,99 @@ function simplified_git_clone() {
 
 # Alias for @ symbol to trigger my simplified git clone helper
 alias @='simplified_git_clone'
+
+# Function to sync all git repositories in subdirectories in first level of the current directory
+# This function will:
+# 1. Check each directory for git repository
+# 2. Handle pending changes (stash if needed)
+# 3. Sync with remote based on current branch status
+# 4. Return to original branch if switched
+# TODO: handle multiple remotes (origin, upstream, etc.)
+function sync_git_repos() {
+    # Store the original directory
+    local original_dir=$(pwd)
+    local exit_status=0
+
+    # Find all directories in the current path
+    for dir in */; do
+        if [ -d "$dir" ]; then
+            cd "$dir" || continue
+
+            # Check if it's a git repository
+            if git rev-parse --git-dir >/dev/null 2>&1; then
+                # Store original git settings
+                local original_autocrlf=$(git config --get core.autocrlf)
+                local original_safecrlf=$(git config --get core.safecrlf)
+                # Temporarily disable CRLF conversion and warnings
+                git config core.autocrlf false
+                git config core.safecrlf false
+
+                # Get current branch/tag
+                local current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
+                # Get default branch
+                local default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
+
+                # Check for pending changes
+                if ! git diff --quiet || ! git diff --cached --quiet; then
+                    echo "📦 $dir - Stashing changes"
+                    if ! git stash push -q -m "Auto-stash by sync_git_repos on $(date)"; then
+                        echo "❌ $dir - Failed to stash changes"
+                    fi
+                fi
+
+                local has_changes=false
+                # If we're on the default branch
+                if [ "$current_ref" = "$default_branch" ]; then
+                    if ! git pull -q origin "$default_branch"; then
+                        echo "❌ $dir - Failed to sync $default_branch"
+                    elif [ "$(git rev-list HEAD...origin/$default_branch --count)" != "0" ]; then
+                        has_changes=true
+                    fi
+                else
+                    # Sync current branch/tag
+                    if ! git fetch -q origin "$current_ref:$current_ref" 2>/dev/null; then
+                        echo "ℹ️  $dir - Could not sync $current_ref directly"
+                    elif [ "$(git rev-list HEAD...origin/$current_ref --count 2>/dev/null)" != "0" ]; then
+                        has_changes=true
+                    fi
+
+                    # Switch to default branch and sync
+                    if git checkout -q "$default_branch"; then
+                        if ! git pull -q origin "$default_branch"; then
+                            echo "❌ $dir - Failed to sync $default_branch"
+                        elif [ "$(git rev-list HEAD...origin/$default_branch --count)" != "0" ]; then
+                            has_changes=true
+                        fi
+                        git checkout -q "$current_ref"
+                    else
+                        echo "❌ $dir - Failed to switch to $default_branch"
+                    fi
+                fi
+
+                if $has_changes; then
+                    echo "✅ $dir - Synced with remote"
+                fi
+
+                # Restore original git settings
+                if [ -n "$original_autocrlf" ]; then
+                    git config core.autocrlf "$original_autocrlf"
+                else
+                    git config --unset core.autocrlf
+                fi
+                if [ -n "$original_safecrlf" ]; then
+                    git config core.safecrlf "$original_safecrlf"
+                else
+                    git config --unset core.safecrlf
+                fi
+            fi
+
+            # Return to original directory before processing next
+            cd "$original_dir" || exit 1
+        fi
+    done
+
+    return $exit_status
+}
+
+# Alias for the sync_git_repos helper function
+alias sync-repos='sync_git_repos'
