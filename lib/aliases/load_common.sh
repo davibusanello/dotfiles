@@ -175,3 +175,53 @@ function sync_git_repos() {
 
 # Alias for the sync_git_repos helper function
 alias sync-repos='sync_git_repos'
+
+# Resets default branch to origin/default_branch
+# Parameters:
+#   --hard: Use git reset --hard instead of pull (destructive)
+#   Additional parameters are passed directly to git pull (if not using --hard)
+# Example:
+#   reset-default-branch --rebase
+#   reset-default-branch --hard
+function reset_default_branch() {
+    local default_branch=$(git_default_branch)
+    local use_hard_reset=false
+    local args=()
+
+    # Parse arguments
+    for arg in "$@"; do
+        if [ "$arg" = "--hard" ]; then
+            use_hard_reset=true
+        else
+            args+=("$arg")
+        fi
+    done
+
+    if ! git switch -q "$default_branch"; then
+        echo "❌ Failed to switch to $default_branch"
+        return 1
+    fi
+
+    if ! git fetch -q origin "$default_branch"; then
+        echo "❌ Failed to fetch $default_branch"
+        return 1
+    fi
+
+    if $use_hard_reset; then
+        if ! git reset --hard "origin/$default_branch"; then
+            echo "❌ Failed to hard reset to origin/$default_branch"
+            return 1
+        fi
+    else
+        if ! git pull -q origin "$default_branch" "${args[@]}"; then
+            echo "❌ Failed to pull $default_branch"
+            return 1
+        fi
+    fi
+
+    echo "✅ Successfully reset $default_branch"
+}
+
+# Alias for the reset_default_branch helper function
+alias reset-default-branch='reset_default_branch'
+alias grdbh='reset_default_branch --hard'
