@@ -13,6 +13,10 @@ function fix_poetry() {
     curl -sSL https://install.python-poetry.org | python3
 }
 
+function git_default_branch() {
+    git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5
+}
+
 # Function to handle git clone for URLs with additional parameters
 # Usage:
 #   @ <repository_url> [options]
@@ -100,9 +104,12 @@ function sync_git_repos() {
                 local original_autocrlf=$(git config --get core.autocrlf)
                 local original_safecrlf=$(git config --get core.safecrlf)
                 # Temporarily disable CRLF conversion and warnings
-                git config core.autocrlf false
-                git config core.safecrlf false
-
+                if [ -n "$original_autocrlf" ]; then
+                    git config core.autocrlf false
+                fi
+                if [ -n "$original_safecrlf" ]; then
+                    git config core.safecrlf false
+                fi
                 # Get current branch/tag
                 local current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
                 # Get default branch
@@ -152,13 +159,9 @@ function sync_git_repos() {
                 # Restore original git settings
                 if [ -n "$original_autocrlf" ]; then
                     git config core.autocrlf "$original_autocrlf"
-                else
-                    git config --unset core.autocrlf
                 fi
                 if [ -n "$original_safecrlf" ]; then
                     git config core.safecrlf "$original_safecrlf"
-                else
-                    git config --unset core.safecrlf
                 fi
             fi
 
