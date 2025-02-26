@@ -100,9 +100,24 @@ alias @='simplified_git_clone'
 # 4. Return to original branch if switched
 # TODO: handle multiple remotes (origin, upstream, etc.)
 function sync_git_repos() {
+    # Parse arguments
+    local verbose=false
+    local args=()
+
+    for arg in "$@"; do
+        if [ "$arg" = "-v" ] || [ "$arg" = "--verbose" ]; then
+            verbose=true
+        else
+            args+=("$arg")
+        fi
+    done
+
     # Store the original directory
     local original_dir=$(pwd)
     local exit_status=0
+    local repos_checked=0
+    local repos_updated=0
+    local repos_failed=0
 
     # Find all directories in the current path
     for dir in */; do
@@ -111,6 +126,12 @@ function sync_git_repos() {
 
             # Check if it's a git repository
             if git rev-parse --git-dir >/dev/null 2>&1; then
+                ((repos_checked++))
+
+                if $verbose; then
+                    echo "🔍 Checking $dir"
+                fi
+
                 # Store original git settings
                 local original_autocrlf=$(git config --get core.autocrlf)
                 local original_safecrlf=$(git config --get core.safecrlf)
@@ -131,40 +152,91 @@ function sync_git_repos() {
                     echo "📦 $dir - Stashing changes"
                     if ! git stash push -q -m "Auto-stash by sync_git_repos on $(date)"; then
                         echo "❌ $dir - Failed to stash changes"
+                        ((repos_failed++))
                     fi
                 fi
 
+                # Fetch all changes from remote
+                git fetch --all -q
+
                 local has_changes=false
+                local before_rev=""
+                local after_rev=""
+
                 # If we're on the default branch
                 if [ "$current_ref" = "$default_branch" ]; then
+                    # Store the current HEAD commit before pulling
+                    before_rev=$(git rev-parse HEAD)
+
                     if ! git pull -q origin "$default_branch"; then
                         echo "❌ $dir - Failed to sync $default_branch"
-                    elif [ "$(git rev-list HEAD...origin/$default_branch --count)" != "0" ]; then
-                        has_changes=true
+                        ((repos_failed++))
+                    else
+                        # Store the HEAD commit after pulling
+                        after_rev=$(git rev-parse HEAD)
+
+                        # Check if there were any changes
+                        if [ "$before_rev" != "$after_rev" ]; then
+                            has_changes=true
+                            # Show a summary of changes
+                            if $verbose; then
+                                echo "📝 $dir - Changes pulled from remote:"
+                                git --no-pager log --oneline --graph --decorate --abbrev-commit "$before_rev..$after_rev" | head -n 5
+                            fi
+                        fi
                     fi
                 else
                     # Sync current branch/tag
+                    local current_before_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
+
                     if ! git fetch -q origin "$current_ref:$current_ref" 2>/dev/null; then
-                        echo "ℹ️  $dir - Could not sync $current_ref directly"
-                    elif [ "$(git rev-list HEAD...origin/$current_ref --count 2>/dev/null)" != "0" ]; then
-                        has_changes=true
+                        if $verbose; then
+                            echo "ℹ️  $dir - Could not sync $current_ref directly"
+                        fi
+                    else
+                        local current_after_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
+                        if [ -n "$current_before_rev" ] && [ -n "$current_after_rev" ] && [ "$current_before_rev" != "$current_after_rev" ]; then
+                            has_changes=true
+                            if $verbose; then
+                                echo "📝 $dir - Changes fetched to $current_ref"
+                            fi
+                        fi
                     fi
 
                     # Switch to default branch and sync
                     if git checkout -q "$default_branch"; then
+                        # Store the current HEAD commit before pulling
+                        before_rev=$(git rev-parse HEAD)
+
                         if ! git pull -q origin "$default_branch"; then
                             echo "❌ $dir - Failed to sync $default_branch"
-                        elif [ "$(git rev-list HEAD...origin/$default_branch --count)" != "0" ]; then
-                            has_changes=true
+                            ((repos_failed++))
+                        else
+                            # Store the HEAD commit after pulling
+                            after_rev=$(git rev-parse HEAD)
+
+                            # Check if there were any changes
+                            if [ "$before_rev" != "$after_rev" ]; then
+                                has_changes=true
+                                # Show a summary of changes
+                                if $verbose; then
+                                    echo "📝 $dir - Changes pulled to $default_branch:"
+                                    git --no-pager log --oneline --graph --decorate --abbrev-commit "$before_rev..$after_rev" | head -n 5
+                                fi
+                            fi
                         fi
                         git checkout -q "$current_ref"
                     else
                         echo "❌ $dir - Failed to switch to $default_branch"
+                        ((repos_failed++))
                     fi
                 fi
 
                 if $has_changes; then
                     echo "✅ $dir - Synced with remote"
+                    ((repos_updated++))
+                elif $verbose; then
+                    echo "✓ $dir - Already up to date"
                 fi
 
                 # Restore original git settings
@@ -181,11 +253,15 @@ function sync_git_repos() {
         fi
     done
 
+    # Print summary
+    echo "📊 Summary: $repos_checked repositories checked, $repos_updated updated, $repos_failed failed"
+
     return $exit_status
 }
 
 # Alias for the sync_git_repos helper function
 alias sync-repos='sync_git_repos'
+alias sync-repos-v='sync_git_repos -v'
 
 # Resets default branch to origin/default_branch
 # Parameters:
