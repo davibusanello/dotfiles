@@ -33,21 +33,32 @@ function git_default_branch() {
 #   1. Without additional parameters:
 #      Creates a directory named {user}_{repository} for GitHub repos
 #      Example: @ https://github.com/user/repo.git -> user_repo
+#      Example: @ https://github.com/user/repo     -> user_repo
 #
 #   2. With "." as parameter:
 #      Clones into current directory (standard git clone behavior)
 #      Example: @ https://github.com/user/repo.git . -> repo
+#      Example: @ https://github.com/user/repo .     -> repo
 #
 #   3. With additional parameters:
 #      Passes all parameters to git clone
 #      Example: @ https://github.com/user/repo.git custom-dir --depth 1
+#      Example: @ https://github.com/user/repo custom-dir --depth 1
 #
 # Returns:
 #   0 - Success
 #   1 - Invalid repository URL
 function simplified_git_clone() {
-    if [[ "$1" =~ "^(https://|http://|git@)([A-Za-z0-9.-]+\.[A-Za-z]{2,})(:[0-9]+)?/.+(.git)?$" ]]; then
-        local url="$1"
+    # Remove trailing slash if present and clean up the URL
+    local url=$(echo "$1" | sed 's/\/$//')
+
+    # Add .git suffix if not present for HTTPS URLs
+    if [[ "$url" =~ ^https?:// ]] && [[ ! "$url" =~ \.git$ ]]; then
+        url="${url}.git"
+    fi
+
+    # Check if it's a valid git repository URL (including browser URLs)
+    if [[ "$url" =~ ^(https://|http://|git@)([A-Za-z0-9.-]+\.[A-Za-z]{2,})(:[0-9]+)?(/|:).+ ]]; then
         local repo_name=$(basename "$url" .git)
 
         # Extract repository user and name
