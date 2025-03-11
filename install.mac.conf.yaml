@@ -37,6 +37,10 @@
     ~/.profile:
         force: true
         path: .profile
+    # Zellij
+    ~/.config/zellij:
+        force: true
+        path: home/config/zellij
     # GIT
     ~/.gitconfig: git/.gitconfig
     ~/.gitignore_global: git/.gitignore_global
