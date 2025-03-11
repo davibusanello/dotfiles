@@ -9,6 +9,7 @@ elif [ -d '/usr/local/opt' ]; then
     BREW_BASE='/usr/local' # Intel
     BREW_OPT_PATH="$BREW_BASE/opt"
 fi
+export BREW_SHARE_PATH="$BREW_BASE/share"
 
 # Set up base Homebrew paths first
 export PATH="$BREW_BASE/bin:$BREW_BASE/sbin:$PATH"
@@ -34,12 +35,26 @@ export PATH=$PATH:$BREW_OPT_PATH/mysql-client/bin
 
 # End libs brew
 
-# Load NVM
-[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"                                       # This loads nvm
-[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm" # This loads nvm bash_completion
+# NVM
+load-nvm-path() {
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+}
+
+load-nvm-path
 
 # How to identify architecture
 # Apple Intel x86_64
 # Apple Silicon arm64
 # if [[ $(uname -m) == 'arm64' ]]; then
 # fi
+
+# Load Bun
+function load_bun() {
+    if [ -d "$HOME/.bun" ]; then
+        export BUN_INSTALL="$HOME/.bun"
+        export PATH="$BUN_INSTALL/bin:$PATH"
+    fi
+}
+load_bun

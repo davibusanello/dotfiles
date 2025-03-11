@@ -205,15 +205,12 @@ export HISTTIMEFORMAT='%F %T '
 export GPG_TTY=$(tty)
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
+# Load fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
-
 # Zellij
-eval "$(zellij setup --generate-auto-start zsh)"
+# Disabled is messing with session list every time I open a terminal on editors or any other automation/script runs
+# eval "$(zellij setup --generate-auto-start zsh)"
 
 # Atuin
 # eval "$(atuin init zsh)"
@@ -224,3 +221,9 @@ if [ -f "${HOME}/google-cloud-sdk/path.zsh.inc" ]; then . "${HOME}/google-cloud-
 
 # The next line enables shell command completion for gcloud.
 if [ -f "${HOME}/google-cloud-sdk/completion.zsh.inc" ]; then . "${HOME}/google-cloud-sdk/completion.zsh.inc"; fi
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/davibusanello/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions

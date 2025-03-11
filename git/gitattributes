@@ -1,11 +1,13 @@
+# Avoid autocrlf and eol issues by having an gitattributes file in the root of the repo defining the rules for the project
+
 * text=auto eol=lf
 *.sh text eol=lf
-*.yml text eol=lf
-*.md text eol=lf
-*.txt text eol=lf
-*.json text eol=lf
-*.toml text eol=lf
-*.yaml text eol=lf
+*.yml text=auto eol=lf
+*.md text=auto eol=lf
+*.txt text=auto eol=lf
+*.json text=auto eol=lf
+*.toml text=auto eol=lf
+*.yaml text=auto eol=lf
 *.mqh text eol=crlf
 *.mq4 text eol=crlf
 *.mq5 text eol=crlf
