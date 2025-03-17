@@ -85,3 +85,63 @@ function reload() {
         echo "👌 No recent changes found, nothing to reload"
     fi
 }
+
+# Helper to dump Zellij pane scrollback
+function dump_zellij_pane_scrollback() {
+    local current_date_time="$(date +%Y%m%d_%H%M%S)"
+    local output_file="/tmp/${current_date_time}_zellij_pane.log"
+
+    zellij action dump-screen -f "$output_file"
+}
+
+# Helper to restore sessions after Zellij update
+function restore_zellij_sessions() {
+    # Check if zellij is installed
+    if ! command_exists "zellij"; then
+        echo "❌ Zellij is not installed. Cannot restore sessions."
+        return 1
+    fi
+
+    # Get current zellij version
+    local current_version=$(zellij --version | cut -d ' ' -f 2)
+    local cache_dir="$HOME/Library/Caches/org.Zellij-Contributors.Zellij"
+
+    if [ ! -d "$cache_dir" ]; then
+        echo "❌ Zellij cache directory not found at $cache_dir"
+        return 1
+    fi
+
+
+    # Find the most recent previous version (highest version number that's not current)
+    local previous_version=$(find "$cache_dir" -maxdepth 1 -type d -name "[0-9]*.[0-9]*.[0-9]*" |
+        grep -v "$current_version" |
+        sort -Vr |
+        head -n 1 |
+        xargs basename 2>/dev/null)
+
+    if [ -z "$previous_version" ]; then
+        echo "❌ No previous Zellij version found to restore from."
+        return 1
+    fi
+
+    # Check if the previous version directory exists and has content
+    if [ ! -d "$cache_dir/$previous_version" ] || [ ! "$(ls -A "$cache_dir/$previous_version" 2>/dev/null)" ]; then
+        echo "❌ Previous version directory ($previous_version) is empty or doesn't exist."
+        return 1
+    fi
+
+    echo "🔄 Restoring Zellij sessions from version $previous_version to $current_version..."
+
+    # Create the current version directory if it doesn't exist
+    mkdir -p "$cache_dir/$current_version"
+
+    # Copy data from previous version to current version
+    cp -r "$cache_dir/$previous_version/"* "$cache_dir/$current_version/"
+
+    if [ $? -eq 0 ]; then
+        echo "✅ Successfully restored Zellij sessions from version $previous_version to $current_version"
+    else
+        echo "❌ Failed to restore Zellij sessions."
+        return 1
+    fi
+}
