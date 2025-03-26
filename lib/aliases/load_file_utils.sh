@@ -243,3 +243,67 @@ function pack() {
         ;;
     esac
 }
+
+# Convert audio files to AAC format
+function convert_audio() {
+    if [ $# -ne 2 ]; then
+        echo "Usage: convert_audio <input_audio_file> <output_format>"
+        return 1
+    fi
+
+    local input_file="$1"
+    local output_format="$2"
+    local output_file="${input_file%.*}_converted.${output_format}"
+    local codec="aac"
+    if [ "$output_format" = "mp3" ]; then
+        codec="libmp3lame"
+    fi
+
+    ffmpeg -i "$input_file" \
+        -c:a "$codec" \
+        -b:a 256k \
+        -ac 0 \
+        -map 0:a \
+        "$output_file"
+
+    if [ $? -eq 0 ]; then
+        echo "Conversion successful: $output_file"
+    else
+        echo "Conversion failed."
+        return 1
+    fi
+}
+
+# Convert video files format
+function convert_video() {
+    if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+        echo "Usage output default to mp4: convert_video <input_video_file>"
+        echo "Usage: convert_video <input_video_file> <output_format>"
+        return 1
+    fi
+
+    # Expand tilde in the input path
+    local input_file=$(eval echo "$1")
+
+    if [ ! -f "$input_file" ]; then
+        echo "'$1' is not a valid file"
+        return 1
+    fi
+
+    local output_format="mp4"
+
+    if [ $# -eq 2 ]; then
+        output_format="$2"
+    fi
+
+    local output_file="${input_file%.*}_converted.${output_format}"
+
+    ffmpeg -hwaccel auto -i "$input_file" -c:v libx264 -preset slow -crf 22 -c:a libopus -b:a 256k -map_metadata 0 "$output_file"
+
+    if [ $? -eq 0 ]; then
+        echo "Conversion successful: $output_file"
+    else
+        echo "Conversion failed."
+        return 1
+    fi
+}
