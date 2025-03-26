@@ -13,3 +13,10 @@ alias replicate_dir="rsync -av --include='*/' --exclude='*' \$1 \$2"
 # Git
 # Detailed git diff
 alias gdd='git wdiff'
+
+# OLLAMA
+# Allow ollama to be used in browser extensions
+alias ollama_serve='OLLAMA_ORIGINS=moz-extension://*,chrome-extension://*,safari-web-extension://* ollama serve'
+
+# Fix ZSH compinit broken cache
+alias fix_zsh_compinit='brew cleanup && rm -f $ZSH_COMPDUMP && omz reload'

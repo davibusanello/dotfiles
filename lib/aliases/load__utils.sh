@@ -111,7 +111,6 @@ function restore_zellij_sessions() {
         return 1
     fi
 
-
     # Find the most recent previous version (highest version number that's not current)
     local previous_version=$(find "$cache_dir" -maxdepth 1 -type d -name "[0-9]*.[0-9]*.[0-9]*" |
         grep -v "$current_version" |
