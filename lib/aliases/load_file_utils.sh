@@ -6,9 +6,10 @@
 function unpack() {
     # Check if at least one file is provided
     if [ $# -lt 1 ]; then
-        echo "Usage: unpack <file> [destination]"
-        echo "Example: unpack file.tar.zst"
-        echo "Example: unpack file.tar.zst destination"
+        echo "Usage: unpack <file> [destination] [specific_files...]"
+        echo "Example: unpack file.tar.zst                  # extract all files"
+        echo "Example: unpack file.tar.zst destination      # extract all files to destination"
+        echo "Example: unpack file.zip . file1.txt file2.txt  # extract only specific files"
         return 1
     fi
 
@@ -18,8 +19,25 @@ function unpack() {
         return 1
     fi
 
+    # Get archive file and convert to absolute path
+    local archive_file="$1"
+    if [[ ! "$archive_file" = /* ]]; then
+        archive_file="$(pwd)/$archive_file"
+    fi
+    shift
+
     # Set destination directory (use . if not provided)
-    local dest="${2:-.}"
+    local dest="."
+    if [ $# -gt 0 ] && [ -n "$1" ]; then
+        dest="$1"
+        shift
+    fi
+
+    # Check for specific files to extract
+    local specific_files=()
+    if [ $# -gt 0 ]; then
+        specific_files=("$@")
+    fi
 
     # Create destination if it doesn't exist
     if [ ! -d "$dest" ]; then
@@ -29,102 +47,230 @@ function unpack() {
     # Use 6 threads by default
     export THREADS=6
 
-    case $1 in
+    # Function to check if we're extracting specific files
+    has_specific_files() {
+        [ ${#specific_files[@]} -gt 0 ]
+    }
+
+    case $archive_file in
     # Plain tar files
     *.tar)
-        if command_exists tar && tar --version | grep -q 'GNU tar'; then
-            tar xvf "$1" --parallel=$THREADS -C "$dest"
+        if has_specific_files; then
+            if command_exists tar && tar --version | grep -q 'GNU tar'; then
+                tar xvf "$archive_file" --parallel=$THREADS -C "$dest" "${specific_files[@]}"
+            else
+                tar xvf "$archive_file" -C "$dest" "${specific_files[@]}"
+            fi
         else
-            tar xvf "$1" -C "$dest"
+            if command_exists tar && tar --version | grep -q 'GNU tar'; then
+                tar xvf "$archive_file" --parallel=$THREADS -C "$dest"
+            else
+                tar xvf "$archive_file" -C "$dest"
+            fi
         fi
         ;;
 
     # Gzip-based formats
     *.tgz | *.tar.gz)
-        if command_exists pigz; then
-            tar --use-compress-program="pigz -d -p$THREADS" -xvf "$1" -C "$dest"
+        if has_specific_files; then
+            if command_exists pigz; then
+                tar --use-compress-program="pigz -d -p$THREADS" -xvf "$archive_file" -C "$dest" "${specific_files[@]}"
+            else
+                tar xvzf "$archive_file" -C "$dest" "${specific_files[@]}"
+            fi
         else
-            tar xvzf "$1" -C "$dest"
+            if command_exists pigz; then
+                tar --use-compress-program="pigz -d -p$THREADS" -xvf "$archive_file" -C "$dest"
+            else
+                tar xvzf "$archive_file" -C "$dest"
+            fi
         fi
         ;;
     *.gz | *.Z)
-        if command_exists pigz; then
-            pigz -d -p$THREADS -c "$1" >"$dest/$(basename "$1" .gz)"
+        if has_specific_files; then
+            echo "Specific file extraction not supported for this format"
+            return 1
         else
-            gunzip -c "$1" >"$dest/$(basename "$1" .gz)"
+            if command_exists pigz; then
+                pigz -d -p$THREADS -c "$archive_file" >"$dest/$(basename "$archive_file" .gz)"
+            else
+                gunzip -c "$archive_file" >"$dest/$(basename "$archive_file" .gz)"
+            fi
         fi
         ;;
 
     # Bzip2-based formats
     *.tbz2 | *.tar.bz2)
-        if command_exists pbzip2; then
-            tar --use-compress-program="pbzip2 -d -p$THREADS" -xvf "$1" -C "$dest"
+        if has_specific_files; then
+            if command_exists pbzip2; then
+                tar --use-compress-program="pbzip2 -d -p$THREADS" -xvf "$archive_file" -C "$dest" "${specific_files[@]}"
+            else
+                tar xvjf "$archive_file" -C "$dest" "${specific_files[@]}"
+            fi
         else
-            tar xvjf "$1" -C "$dest"
+            if command_exists pbzip2; then
+                tar --use-compress-program="pbzip2 -d -p$THREADS" -xvf "$archive_file" -C "$dest"
+            else
+                tar xvjf "$archive_file" -C "$dest"
+            fi
         fi
         ;;
 
     # XZ-based formats
     *.tar.xz | *.txz)
-        if command_exists xz; then
-            XZ_DEFAULTS="-T$THREADS" tar xvJf "$1" -C "$dest"
+        if has_specific_files; then
+            if command_exists xz; then
+                XZ_DEFAULTS="-T$THREADS" tar xvJf "$archive_file" -C "$dest" "${specific_files[@]}"
+            else
+                echo "Please install xz-utils to extract this file"
+                return 1
+            fi
         else
-            echo "Please install xz-utils to extract this file"
-            return 1
+            if command_exists xz; then
+                XZ_DEFAULTS="-T$THREADS" tar xvJf "$archive_file" -C "$dest"
+            else
+                echo "Please install xz-utils to extract this file"
+                return 1
+            fi
         fi
         ;;
     *.xz)
-        if command_exists xz; then
-            XZ_DEFAULTS="-T$THREADS" xz -d -c "$1" >"$dest/$(basename "$1" .xz)"
-        else
-            echo "Please install xz-utils to extract this file"
+        if has_specific_files; then
+            echo "Specific file extraction not supported for this format"
             return 1
+        else
+            if command_exists xz; then
+                XZ_DEFAULTS="-T$THREADS" xz -d -c "$archive_file" >"$dest/$(basename "$archive_file" .xz)"
+            else
+                echo "Please install xz-utils to extract this file"
+                return 1
+            fi
         fi
         ;;
 
     # Zstandard formats
     *.tar.zst | *.tzst)
-        if command_exists zstd; then
-            tar --use-compress-program="zstd -d -T$THREADS" -xvf "$1" -C "$dest"
+        if has_specific_files; then
+            if command_exists zstd; then
+                tar --use-compress-program="zstd -d -T$THREADS" -xvf "$archive_file" -C "$dest" "${specific_files[@]}"
+            else
+                echo "Please install zstd to extract this file"
+                return 1
+            fi
         else
-            echo "Please install zstd to extract this file"
-            return 1
+            if command_exists zstd; then
+                tar --use-compress-program="zstd -d -T$THREADS" -xvf "$archive_file" -C "$dest"
+            else
+                echo "Please install zstd to extract this file"
+                return 1
+            fi
         fi
         ;;
     *.zst)
-        if command_exists zstd; then
-            zstd -d -T$THREADS -c "$1" >"$dest/$(basename "$1" .zst)"
-        else
-            echo "Please install zstd to extract this file"
+        if has_specific_files; then
+            echo "Specific file extraction not supported for this format"
             return 1
+        else
+            if command_exists zstd; then
+                zstd -d -T$THREADS -c "$archive_file" >"$dest/$(basename "$archive_file" .zst)"
+            else
+                echo "Please install zstd to extract this file"
+                return 1
+            fi
         fi
         ;;
 
     # 7zip-handled formats
     *.7z | *.zip | *.rar)
-        if command_exists 7z; then
-            7z x -mmt=$THREADS "$1" "-o$dest"
-        elif [ "${1##*.}" = "zip" ]; then
-            unzip "$1" -d "$dest"
-        elif [ "${1##*.}" = "rar" ] && command_exists unrar; then
-            unrar x "$1" "$dest"
-        else
-            echo "Please install 7zip to extract this file"
-            return 1
+        if has_specific_files; then
+            if command_exists 7z; then
+                # Create a list file with the files to extract
+                local list_file=$(mktemp)
+                printf "%s\n" "${specific_files[@]}" >"$list_file"
+
+                # Extract only the selected files
+                7z x -mmt=$THREADS "$archive_file" "-o$dest" "@$list_file"
+
+                # Remove the list file
+                rm -f "$list_file"
+            elif [ "${archive_file##*.}" = "zip" ]; then
+                # For zip, we need special handling of selected files
+                if [[ "$archive_file" == *.zip ]]; then
+                    # Extract all files to the temp directory
+                    (cd "$dest" && unzip -o "$archive_file")
+                    echo "Extracted all files to $dest"
+
+                    # Create a subfolder for selected files
+                    local selected_dir="${dest}/selected"
+                    mkdir -p "$selected_dir"
+
+                    # Find each selected file and copy it to the selected directory
+                    for file in $specific_files; do
+                        # Remove the root directory if present
+                        local file_path="${file#*/}"
+
+                        # Check if the file exists with its full path
+                        if [ -f "${dest}/${file}" ]; then
+                            # Copy with directory structure
+                            mkdir -p "$(dirname "${selected_dir}/${file}")"
+                            cp "${dest}/${file}" "${selected_dir}/${file}"
+                            echo "Copied: ${file}"
+                        elif [ -f "${dest}/${file_path}" ]; then
+                            # Copy without root directory
+                            mkdir -p "$(dirname "${selected_dir}/${file_path}")"
+                            cp "${dest}/${file_path}" "${selected_dir}/${file_path}"
+                            echo "Copied: ${file_path}"
+                        else
+                            echo "Warning: Could not find ${file} in the archive"
+                        fi
+                    done
+
+                    # Check if we found any files
+                    if [ -z "$(ls -A "$selected_dir")" ]; then
+                        echo "No matching files were found in the archive."
+                        # Keep all files since extraction failed
+                        return
+                    fi
+
+                    # Clean up the full extraction safely
+                    for item in "$dest"/*; do
+                        if [ "$item" != "$selected_dir" ]; then
+                            rm -rf "$item"
+                        fi
+                    done
+
+                    # Move selected files back to dest
+                    cp -R "${selected_dir}"/* "$dest" 2>/dev/null || true
+                    rm -rf "$selected_dir"
+
+                    echo "Successfully extracted selected files."
+                    return
+                fi
+            elif [ "${archive_file##*.}" = "rar" ] && command_exists unrar; then
+                (cd "$dest" && unrar x "$archive_file" "${specific_files[@]}")
+            else
+                echo "Please install 7zip to extract this file"
+                return 1
+            fi
         fi
         ;;
 
     # Cabinet files
     *.exe)
-        if command_exists cabextract; then
-            cabextract -d "$dest" "$1"
-        else
-            echo "Please install cabextract to extract this file"
+        if has_specific_files; then
+            echo "Specific file extraction not supported for this format"
             return 1
+        else
+            if command_exists cabextract; then
+                cabextract -d "$dest" "$archive_file"
+            else
+                echo "Please install cabextract to extract this file"
+                return 1
+            fi
         fi
         ;;
 
-    *) echo "'$1': unrecognized file compression" ;;
+    *) echo "'$archive_file': unrecognized file compression" ;;
     esac
 }
 
