@@ -493,66 +493,59 @@ function search_archive() {
             echo "Extracting selected files to $temp_dir"
         fi
 
-        # Create a temporary archive with only selected files
-        local temp_archive="${temp_dir}/temp_archive.${archive##*.}"
+        # Convert to absolute path if it's a relative path
+        if [[ ! "$archive" = /* ]]; then
+            archive="$(pwd)/$archive"
+        fi
 
-        case "$archive" in
-        # For tar-based formats, we can extract specific files directly
-        *.tar | *.tgz | *.tar.gz | *.tbz2 | *.tar.bz2 | *.tar.xz | *.txz | *.tar.zst | *.tzst)
-            for file in $selected_files; do
-                case "$archive" in
-                *.tar)
-                    tar xf "$archive" -C "$temp_dir" "$file"
-                    ;;
-                *.tgz | *.tar.gz)
-                    tar xzf "$archive" -C "$temp_dir" "$file"
-                    ;;
-                *.tbz2 | *.tar.bz2)
-                    tar xjf "$archive" -C "$temp_dir" "$file"
-                    ;;
-                *.tar.xz | *.txz)
-                    tar xJf "$archive" -C "$temp_dir" "$file"
-                    ;;
-                *.tar.zst | *.tzst)
-                    tar --use-compress-program="zstd -d -T$THREADS" -xf "$archive" -C "$temp_dir" "$file"
-                    ;;
-                esac
-            done
-            ;;
-        # For non-tar formats, use unpack for the whole archive and then move selected files
-        *.7z | *.zip | *.rar)
-            # Create a subdirectory for the full extraction
-            local full_extract_dir="${temp_dir}/full_extract"
-            mkdir -p "$full_extract_dir"
-
-            # Use unpack helper to extract the full archive
-            unpack "$archive" "$full_extract_dir"
-
-            # Move only the selected files to temp_dir
-            for file in $selected_files; do
-                # Make sure parent directories exist
-                mkdir -p "$(dirname "${temp_dir}/${file}")"
-
-                # Move selected file if it exists
-                if [ -e "${full_extract_dir}/${file}" ]; then
-                    mv "${full_extract_dir}/${file}" "${temp_dir}/${file}"
+        # For zip files, we need special handling of selected files
+        if [[ "$archive" == *.zip ]]; then
+            # Process each file from the list
+            while IFS= read -r file || [[ -n "$file" ]]; do
+                # Skip empty lines
+                if [ -z "$file" ]; then
+                    continue
                 fi
-            done
 
-            # Clean up the full extraction directory
-            rm -rf "$full_extract_dir"
-            ;;
-        *)
-            echo "Unsupported archive format for extraction"
-            rm -rf "$temp_dir"
-            return 1
-            ;;
-        esac
+                # Create the target directory structure
+                local target_file="$temp_dir/$file"
+                mkdir -p "$(dirname "$target_file")"
 
-        echo "Files extracted to: $temp_dir"
-        # Only show cleanup warning for temp directories
-        if [ -z "$extract_dir" ]; then
-            echo "Alert: This directory will not be automatically cleaned up"
+                # Extract the file content directly to the target file
+                # it doesn't extract the file metadata
+                unzip -p "$archive" "$file" >"$target_file" 2>/dev/null
+
+                # Check if extraction succeeded
+                if [ $? -eq 0 ]; then
+                    echo "Extracted: $file"
+                else
+                    # Try without root directory if present
+                    local file_no_root="${file#*/}"
+                    if [ "$file" != "$file_no_root" ]; then
+                        unzip -p "$archive" "$file_no_root" >"$temp_dir/$file_no_root" 2>/dev/null
+                        if [ $? -eq 0 ]; then
+                            echo "Extracted: $file_no_root (renamed from $file)"
+                        else
+                            echo "Warning: Could not extract $file"
+                        fi
+                    else
+                        echo "Warning: Could not extract $file"
+                    fi
+                fi
+            done <"$selected_files"
+
+            # Clean up
+            rm -f "$selected_files"
+
+            echo "Extraction complete"
+            if [ -z "$extract_dir" ]; then
+                echo "Files are in: $temp_dir"
+                echo "Alert: This directory will not be automatically cleaned up"
+            fi
+        else
+            # For other formats, use the standard extract_selected function
+            local selected_files_space=$(echo "$selected_files" | tr '\n' ' ')
+            extract_selected "$selected_files_space" "$archive_file" "$extract_dir"
         fi
     }
 
@@ -643,7 +636,13 @@ function search_archive() {
 
     # If fzf available, use interactive selection
     if command_exists fzf; then
-        local selected_files=$(echo "$archive_listing" | fzf --multi --preview "echo {} | grep --color=always -E '.*'")
+        # Only allow multi-select for ZIP files
+        local multi_flag=""
+        if [[ "$archive_file" == *.zip ]]; then
+            multi_flag="--multi "
+        fi
+
+        local selected_files=$(echo "$archive_listing" | fzf "$multi_flag"--preview "echo {} | grep --color=always -E '.*'")
 
         if [ -n "$selected_files" ]; then
             echo "Selected files: "
@@ -652,7 +651,89 @@ function search_archive() {
             printf "Do you want to extract these files? (y/n): "
             read extract_choice
             if [[ "$extract_choice" == "y" || "$extract_choice" == "Y" ]]; then
-                extract_selected "$selected_files" "$archive_file" "$extract_dir"
+                # Create a temporary file with selected files
+                local tmp_filelist=$(mktemp)
+                echo "$selected_files" >"$tmp_filelist"
+
+                # Extract each file individually
+                local temp_dir
+                if [ -n "$extract_dir" ]; then
+                    # Create the directory if it doesn't exist
+                    mkdir -p "$extract_dir"
+                    temp_dir="$extract_dir"
+                    echo "Extracting selected files to $temp_dir"
+                else
+                    temp_dir=$(mktemp -d)
+                    echo "Extracting selected files to $temp_dir"
+                fi
+
+                # Convert to absolute path if it's a relative path
+                if [[ ! "$archive_file" = /* ]]; then
+                    archive_file="$(pwd)/$archive_file"
+                fi
+
+                # For zip files, use direct extraction
+                if [[ "$archive_file" == *.zip ]]; then
+                    echo "Extracting files directly to $temp_dir"
+
+                    # Process each file from the list
+                    while IFS= read -r file || [[ -n "$file" ]]; do
+                        # Skip empty lines
+                        if [ -z "$file" ]; then
+                            continue
+                        fi
+
+                        # Create the target directory structure
+                        local target_file="$temp_dir/$file"
+                        mkdir -p "$(dirname "$target_file")"
+
+                        # Extract the file content directly to the target file
+                        unzip -p "$archive_file" "$file" >"$target_file" 2>/dev/null
+
+                        # Check if extraction succeeded
+                        if [ $? -eq 0 ]; then
+                            echo "Extracted: $file"
+                        else
+                            # Try without root directory if present
+                            local file_no_root="${file#*/}"
+                            if [ "$file" != "$file_no_root" ]; then
+                                unzip -p "$archive_file" "$file_no_root" >"$temp_dir/$file_no_root" 2>/dev/null
+                                if [ $? -eq 0 ]; then
+                                    echo "Extracted: $file_no_root (renamed from $file)"
+                                else
+                                    echo "Warning: Could not extract $file"
+                                fi
+                            else
+                                echo "Warning: Could not extract $file"
+                            fi
+                        fi
+                    done <"$tmp_filelist"
+
+                    # Clean up
+                    rm -f "$tmp_filelist"
+
+                    echo "Extraction complete"
+                    if [ -z "$extract_dir" ]; then
+                        echo "Files are in: $temp_dir"
+                        echo "Alert: This directory will not be automatically cleaned up"
+                    fi
+                else
+                    # For non-zip formats, use the unpack helper with a single file
+                    local single_file=$(cat "$tmp_filelist" | head -n 1)
+
+                    # Use the unpack helper function
+                    unpack "$archive_file" "$temp_dir" "$single_file"
+
+                    if [ $? -eq 0 ]; then
+                        echo "Extracted: $single_file"
+                    else
+                        echo "Failed to extract $single_file"
+                    fi
+
+                    # Clean up
+                    rm -f "$tmp_filelist"
+                    echo "Extraction complete"
+                fi
             fi
         fi
     else
