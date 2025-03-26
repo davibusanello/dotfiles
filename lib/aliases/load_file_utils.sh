@@ -307,3 +307,216 @@ function convert_video() {
         return 1
     fi
 }
+
+# Search within compressed files for specific files or content
+function search_archive() {
+    if [ $# -lt 1 ]; then
+        echo "Usage: search_archive <archive_file> [search_pattern] [extract_dir]"
+        echo "Example: search_archive file.tar.gz                 # interactive browsing with fzf"
+        echo "Example: search_archive file.zip \"*.txt\"            # search for specific pattern"
+        echo "Example: search_archive file.tar.gz \"*.sql\" ./out   # extract matching files to ./out"
+        return 1
+    fi
+
+    # Check if file exists
+    if [ ! -f "$1" ]; then
+        echo "'$1' is not a valid file"
+        return 1
+    fi
+
+    local archive_file="$1"
+    local search_pattern="$2"
+    local extract_dir="$3"
+    export THREADS=6
+    local archive_listing=""
+
+    # Function to extract specific files if chosen
+    extract_selected() {
+        local selected_files="$1"
+        local archive="$2"
+        local temp_dir
+
+        # Use provided extract dir or create a temp dir
+        if [ -n "$extract_dir" ]; then
+            # Create the directory if it doesn't exist
+            mkdir -p "$extract_dir"
+            temp_dir="$extract_dir"
+            echo "Extracting selected files to $temp_dir"
+        else
+            temp_dir=$(mktemp -d)
+            echo "Extracting selected files to $temp_dir"
+        fi
+
+        # Create a temporary archive with only selected files
+        local temp_archive="${temp_dir}/temp_archive.${archive##*.}"
+
+        case "$archive" in
+        # For tar-based formats, we can extract specific files directly
+        *.tar | *.tgz | *.tar.gz | *.tbz2 | *.tar.bz2 | *.tar.xz | *.txz | *.tar.zst | *.tzst)
+            for file in $selected_files; do
+                case "$archive" in
+                *.tar)
+                    tar xf "$archive" -C "$temp_dir" "$file"
+                    ;;
+                *.tgz | *.tar.gz)
+                    tar xzf "$archive" -C "$temp_dir" "$file"
+                    ;;
+                *.tbz2 | *.tar.bz2)
+                    tar xjf "$archive" -C "$temp_dir" "$file"
+                    ;;
+                *.tar.xz | *.txz)
+                    tar xJf "$archive" -C "$temp_dir" "$file"
+                    ;;
+                *.tar.zst | *.tzst)
+                    tar --use-compress-program="zstd -d -T$THREADS" -xf "$archive" -C "$temp_dir" "$file"
+                    ;;
+                esac
+            done
+            ;;
+        # For non-tar formats, use unpack for the whole archive and then move selected files
+        *.7z | *.zip | *.rar)
+            # Create a subdirectory for the full extraction
+            local full_extract_dir="${temp_dir}/full_extract"
+            mkdir -p "$full_extract_dir"
+
+            # Use unpack helper to extract the full archive
+            unpack "$archive" "$full_extract_dir"
+
+            # Move only the selected files to temp_dir
+            for file in $selected_files; do
+                # Make sure parent directories exist
+                mkdir -p "$(dirname "${temp_dir}/${file}")"
+
+                # Move selected file if it exists
+                if [ -e "${full_extract_dir}/${file}" ]; then
+                    mv "${full_extract_dir}/${file}" "${temp_dir}/${file}"
+                fi
+            done
+
+            # Clean up the full extraction directory
+            rm -rf "$full_extract_dir"
+            ;;
+        *)
+            echo "Unsupported archive format for extraction"
+            rm -rf "$temp_dir"
+            return 1
+            ;;
+        esac
+
+        echo "Files extracted to: $temp_dir"
+        # Only show cleanup warning for temp directories
+        if [ -z "$extract_dir" ]; then
+            echo "Alert: This directory will not be automatically cleaned up"
+        fi
+    }
+
+    # Get archive listing based on format
+    case "$archive_file" in
+    # Tar-based formats
+    *.tar)
+        archive_listing=$(tar tf "$archive_file")
+        ;;
+    *.tgz | *.tar.gz)
+        archive_listing=$(tar tzf "$archive_file")
+        ;;
+    *.tbz2 | *.tar.bz2)
+        archive_listing=$(tar tjf "$archive_file")
+        ;;
+    *.tar.xz | *.txz)
+        archive_listing=$(tar tJf "$archive_file")
+        ;;
+    *.tar.zst | *.tzst)
+        if command_exists zstd; then
+            archive_listing=$(tar --use-compress-program="zstd -d -T$THREADS" -tf "$archive_file")
+        else
+            echo "Please install zstd to search this file"
+            return 1
+        fi
+        ;;
+    # 7zip-handled formats
+    *.7z | *.zip | *.rar)
+        if command_exists 7z; then
+            archive_listing=$(7z l -ba "$archive_file" | awk '{print $6}')
+        elif [ "${archive_file##*.}" = "zip" ] && command_exists unzip; then
+            # Get total number of lines and calculate how many to keep (total - 6)
+            local total_lines=$(unzip -l "$archive_file" | wc -l | tr -d ' ')
+            local lines_to_keep=$((total_lines - 6)) # Skip 4 header + 2 footer lines
+            archive_listing=$(unzip -l "$archive_file" | tail -n +5 | head -n $lines_to_keep | awk '{$1=$2=$3=""; sub(/^[ \t]+/, ""); print}')
+        elif [ "${archive_file##*.}" = "rar" ] && command_exists unrar; then
+            archive_listing=$(unrar l -p- "$archive_file" | tail -n +8 | head -n -3 | awk '{$1=$2=$3=$4=$5=""; sub(/^[ \t]+/, ""); print}')
+        else
+            echo "Please install 7zip to search inside this file"
+            return 1
+        fi
+        ;;
+    *)
+        echo "'$archive_file': unsupported archive format for searching"
+        return 1
+        ;;
+    esac
+
+    # If no listing could be generated
+    if [ -z "$archive_listing" ]; then
+        echo "Could not list archive contents"
+        return 1
+    fi
+
+    # If search pattern provided, filter using grep
+    if [ -n "$search_pattern" ]; then
+        # Convert common glob patterns to regex
+        if [[ "$search_pattern" == *"*"* || "$search_pattern" == *"?"* ]]; then
+            # Replace . with \. for regex
+            local regex_pattern="${search_pattern//./\\.}"
+            # Replace * with .* for regex
+            regex_pattern="${regex_pattern//\*/.*}"
+            # Replace ? with . for regex
+            regex_pattern="${regex_pattern//\?/.}"
+
+            if command_exists rg; then
+                archive_listing=$(echo "$archive_listing" | rg "$regex_pattern")
+            else
+                archive_listing=$(echo "$archive_listing" | grep -E -i "$regex_pattern")
+            fi
+        else
+            # Regular pattern (not glob)
+            if command_exists rg; then
+                archive_listing=$(echo "$archive_listing" | rg "$search_pattern")
+            else
+                archive_listing=$(echo "$archive_listing" | grep -i "$search_pattern")
+            fi
+        fi
+
+        # If no matches found after filtering
+        if [ -z "$archive_listing" ]; then
+            echo "No matches found for pattern: $search_pattern"
+            return 1
+        fi
+
+        # Continue to interactive selection with the filtered list
+    fi
+
+    # If fzf available, use interactive selection
+    if command_exists fzf; then
+        local selected_files=$(echo "$archive_listing" | fzf --multi --preview "echo {} | grep --color=always -E '.*'")
+
+        if [ -n "$selected_files" ]; then
+            echo "Selected files: "
+            echo "$selected_files"
+
+            printf "Do you want to extract these files? (y/n): "
+            read extract_choice
+            if [[ "$extract_choice" == "y" || "$extract_choice" == "Y" ]]; then
+                extract_selected "$selected_files" "$archive_file" "$extract_dir"
+            fi
+        fi
+    else
+        # No fzf, just display with less or cat
+        if command_exists less; then
+            echo "$archive_listing" | less
+        else
+            echo "$archive_listing"
+        fi
+    fi
+}
+
+alias fdpack="search_archive"
