@@ -1,0 +1,101 @@
+[user]
+	signingKey = PLACEHOLDER_SIGNING_KEY
+	name = PLACEHOLDER_NAME
+	email = PLACEHOLDER_EMAIL
+[diff]
+	# tool = meld
+	noprefix = true
+	wsErrorHighlight = all
+[diffltool]
+	prompt = true
+[difftool "meld"]
+	trustExitCode = true
+[merge]
+	conflictstyle = zdiff3
+[mergetool]
+	prompt = true
+[mergetool "meld"]
+	trustExitCode = true
+[core]
+	pager = delta # less -F -X
+	excludesfile = "~/.gitignore_global"
+	attributesfile = "~/.gitattributes"
+[cola]
+	spellcheck = false
+	expandtab = true
+[gui]
+	editor = nvim
+[delta]
+	navigate = true
+	dark = true
+	true-color = always
+	side-by-side = true
+	line-numbers = true
+[interactive]
+	diffFilter = delta --color-only
+[alias]
+	tree = "!git log --graph --decorate --pretty=format:'%C(yellow)%h %Cred%cr %Cblue(%an)%C(cyan)%d%Creset %s' --abbrev-commit --all"
+    log-my-week = !git log --author $(git config user.email) --since "1 week ago"
+    # Revert last commit
+    uncommit = reset --soft HEAD~1
+    # Add changes to Stash and apply it back
+    snapshot = !git stash push -m \"snapshot: $(date)\" && git stash apply stash@{0}
+    delsnapshot = !git stash drop "stash@{0}"
+
+    # Sync the fork repository with the upstream
+    syncfork = "!sh $DOTFILES_PATH/git/git_sync_forked_repository.sh"
+
+    safereset = "!f() { \
+        trap 'echo ERROR: Operation failed; return' ERR; \
+        echo Making sure there are no changes...; \
+        last_status=$(git status --porcelain);\
+        if [[ $last_status != \"\" ]]; then\
+            echo There are dirty files:;\
+            echo \"$last_status\";\
+            echo;\
+            echo -n \"Enter Y if you would like to DISCARD these changes or W to commit them as WIP: \";\
+            read dirty_operation;\
+            if [ \"$dirty_operation\" == \"Y\" ]; then \
+                echo Resetting...;\
+                git reset --hard;\
+            elif [ \"$dirty_operation\" == \"W\" ]; then\
+                echo Comitting WIP...;\
+                git commit -a --message='WIP' > /dev/null && echo WIP Comitted;\
+            else\
+                echo Operation cancelled;\
+                exit 1;\
+            fi;\
+        fi;\
+    }; \
+    f"
+
+    lastcommit = !git rev-list -n 1 HEAD --pretty=format:%s
+    wdiff = diff --word-diff --color-words
+
+[merge]
+	tool = meld
+[commit]
+	gpgsign = true
+;[gpg]
+;	program = /usr/local/bin/gpg
+; git config --show-origin --get user.email to test
+[includeIf "gitdir/i:~/ToptalProjects/"]
+	path = "gitconfig"
+[pull]
+	ff = only
+[init]
+	defaultBranch = main
+[gpg]
+	program = gpg2
+[diff "sopsdiffer"]
+	textconv = sops -d
+[credential]
+	helper =
+	helper = /usr/local/share/gcm-core/git-credential-manager
+[credential "https://dev.azure.com"]
+	useHttpPath = true
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
