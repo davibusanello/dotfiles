@@ -161,9 +161,12 @@ export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
 #export TESSDATA_PREFIX="$(brew --prefix)/Cellar/tesseract-lang/4.1.0/share"
 
 # FZF
+# Set up fzf key bindings and fuzzy completion
+# source <(fzf --zsh)
+
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+# export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
 # Auto switch node version (nvm)
 autoload -U add-zsh-hook

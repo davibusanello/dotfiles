@@ -16,7 +16,12 @@ alias gdd='git wdiff'
 
 # OLLAMA
 # Allow ollama to be used in browser extensions
-alias ollama_serve='OLLAMA_ORIGINS=moz-extension://*,chrome-extension://*,safari-web-extension://* ollama serve'
+alias ollama_serve='OLLAMA_MAX_LOADED_MODELS=2 OLLAMA_NUM_PARALLEL=3 OLLAMA_ORIGINS=moz-extension://*,chrome-extension://*,safari-web-extension://* ollama serve'
 
 # Fix ZSH compinit broken cache
 alias fix_zsh_compinit='brew cleanup && rm -f $ZSH_COMPDUMP && omz reload'
+
+# GitHub Create repository
+function ghrc() {
+    gh repo create "$(basename $(pwd))" --source=. --remote=origin --push "$@"
+}

@@ -129,6 +129,14 @@ function restore_zellij_sessions() {
         return 1
     fi
 
+    # Request confirmation
+    printf "Are you sure you want to restore Zellij sessions from version %s to %s? (y/n): " "$previous_version" "$current_version"
+    read confirm
+    if [ "$confirm" != "y" ]; then
+        echo "👌 Restoration cancelled."
+        return 1
+    fi
+
     echo "🔄 Restoring Zellij sessions from version $previous_version to $current_version..."
 
     # Create the current version directory if it doesn't exist
