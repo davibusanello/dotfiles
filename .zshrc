@@ -168,30 +168,7 @@ export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=head
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 # export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
-# Auto switch node version (nvm)
 autoload -U add-zsh-hook
-load-nvmrc() {
-    local node_version="$(nvm version)"
-    local nvmrc_path="$(nvm_find_nvmrc)"
-
-    if [ -n "$nvmrc_path" ]; then
-        local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
-
-        if [ "$nvmrc_node_version" = "N/A" ]; then
-            nvm install
-        elif [ "$nvmrc_node_version" != "$node_version" ]; then
-            nvm use
-        fi
-    elif [ "$node_version" != "$(nvm version default)" ]; then
-        echo "Reverting to nvm default version"
-        nvm use default
-    fi
-}
-# add-zsh-hook chpwd load-nvmrc
-# load-nvmrc
-
-# FNM
-eval "$(fnm env --use-on-cd --corepack-enabled --resolve-engines --shell zsh)"
 
 # Direnv
 eval "$(direnv hook zsh)"
@@ -229,7 +206,7 @@ if [ -f "${HOME}/google-cloud-sdk/path.zsh.inc" ]; then . "${HOME}/google-cloud-
 if [ -f "${HOME}/google-cloud-sdk/completion.zsh.inc" ]; then . "${HOME}/google-cloud-sdk/completion.zsh.inc"; fi
 
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/davibusanello/.docker/completions $fpath)
+fpath=("${HOME}/.docker/completions" $fpath)
 autoload -Uz compinit
 compinit
 # End of Docker CLI completions
