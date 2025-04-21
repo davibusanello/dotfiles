@@ -94,10 +94,13 @@ source $ZSH/oh-my-zsh.sh
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
     export EDITOR='vim'
+elif command -v nvim >/dev/null 2>&1; then
+    export EDITOR=nvim
+    export VISUAL=nvim
 else
-    export EDITOR='vim'
+    export EDITOR="vim"
+    export VISUAL="vim"
 fi
-export VISUAL="vim"
 
 # Compilation flags
 export ARCHFLAGS="-arch x86_64"
@@ -113,8 +116,8 @@ export GPG_TTY=$(tty)
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-alias zshconfig="vim ~/.zshrc"
-alias ohmyzsh="vim ~/.oh-my-zsh"
+alias zshconfig="$EDITOR ~/.zshrc"
+alias ohmyzsh="$EDITOR ~/.oh-my-zsh"
 
 # Personal
 # TODO: It was needed for Tilix when using Linux as main OS
@@ -130,7 +133,7 @@ export SAVEHIST=10000
 export HISTTIMEFORMAT='%F %T '
 export PAGER=less
 export LESS="-F -X $LESS"
-export PSQL_EDITOR=/usr/bin/vim
+export PSQL_EDITOR=$EDITOR
 
 # Identify and load OS specific shell scripts
 if [ -z "$DOTFILES_PATH" ]; then
@@ -142,7 +145,10 @@ USER_LOCAL_BIN=$HOME/.local/bin
 export PATH=$PATH:$USER_LOCAL_BIN
 
 # Rust environment
-source $HOME/.cargo/env
+if [ -f "$HOME/.cargo/env" ]; then
+    source $HOME/.cargo/env
+fi
+
 MYBIN=$HOME/bin
 export PATH=$PATH:$MYBIN
 
@@ -169,9 +175,6 @@ export FZF_DEFAULT_COMMAND="rg --files --line-number"
 # export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
 autoload -U add-zsh-hook
-
-# Direnv
-eval "$(direnv hook zsh)"
 
 # GPG
 export LC_ALL="en_US.UTF-8"
