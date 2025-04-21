@@ -1,19 +1,25 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 # Load developer tools
 
+## Paths to skip auto switch version of runtime version managers
 SKIP_AUTO_SWITCH_VERSION_PATHS=(
     "$HOME/Projects/project-examples"
     "$HOME/Projects/docs"
 )
 
+## Direnv
+SKIP_AUTO_LOAD_DIRENV_PATHS=("${SKIP_AUTO_SWITCH_VERSION_PATHS[@]}")
+
 ## Version managers
 
+### Node
 NODE_VERSION_MANAGER="fnm"
 
-## NVM
+#### NVM
 if [ "$NODE_VERSION_MANAGER" = "nvm" ] && command_exists "nvm"; then
-    load-nvmrc() {
+    unset -f load-nvmrc
+    function load-nvmrc() {
         # Skip auto switch version if the current path is in the skip list
         for skip_path in "${SKIP_AUTO_SWITCH_VERSION_PATHS[@]}"; do
             if [[ "$PWD" == "$skip_path"* ]]; then
@@ -38,15 +44,17 @@ if [ "$NODE_VERSION_MANAGER" = "nvm" ] && command_exists "nvm"; then
         fi
     }
     add-zsh-hook chpwd load-nvmrc
+
+    # Load nvm at startup
     load-nvmrc
 fi
 
-## FNM
+#### FNM
 if [ "$NODE_VERSION_MANAGER" = "fnm" ] && command_exists "fnm"; then
     # Load fnm without using on-cd hook
     eval "$(fnm env --corepack-enabled --resolve-engines --shell=zsh)"
-
-    fnm_auto_switch_version() {
+    unset -f fnm_auto_switch_version
+    function fnm_auto_switch_version() {
         # Skip auto switch version if the current path is in the skip list
         for skip_path in "${SKIP_AUTO_SWITCH_VERSION_PATHS[@]}"; do
             if [[ "$PWD" == "$skip_path"* ]]; then
@@ -59,5 +67,28 @@ if [ "$NODE_VERSION_MANAGER" = "fnm" ] && command_exists "fnm"; then
 
     add-zsh-hook chpwd fnm_auto_switch_version
 
-    # fnm_auto_switch_version
+    # Load fnm at startup
+    fnm_auto_switch_version
+fi
+
+## General tools
+### Direnv
+if command_exists "direnv"; then
+    echo "Loading direnv"
+    unset -f direnv_auto_load
+    function direnv_auto_load() {
+        for skip_path in "${SKIP_AUTO_LOAD_DIRENV_PATHS[@]}"; do
+            if [[ "$PWD" == "$skip_path"* ]]; then
+                eval "$(direnv export zsh --unload)"
+                return
+            fi
+        done
+
+        eval "$(direnv export zsh)"
+    }
+
+    add-zsh-hook chpwd direnv_auto_load
+
+    # Load direnv at startup
+    direnv_auto_load
 fi
