@@ -454,6 +454,45 @@ function convert_video() {
     fi
 }
 
+# Extract audio from a video file
+function extract_audio_from_video() {
+    if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+        echo "Usage: extract_audio_from_video <input_video_file> [output_format]"
+        echo "Default output format is mp3."
+        return 1
+    fi
+
+    local input_file=$(eval echo "$1")
+    if [ ! -f "$input_file" ]; then
+        echo "'$1' is not a valid file"
+        return 1
+    fi
+
+    local output_format="mp3"
+    if [ $# -eq 2 ]; then
+        output_format="$2"
+    fi
+
+    local output_file="${input_file%.*}_audio.${output_format}"
+
+    # Choose codec based on format
+    local codec="libmp3lame"
+    if [ "$output_format" = "aac" ]; then
+        codec="aac"
+    elif [ "$output_format" = "wav" ]; then
+        codec="pcm_s16le"
+    fi
+
+    ffmpeg -i "$input_file" -vn -acodec "$codec" -b:a 256k "$output_file"
+
+    if [ $? -eq 0 ]; then
+        echo "Audio extracted successfully: $output_file"
+    else
+        echo "Audio extraction failed."
+        return 1
+    fi
+}
+
 # Search within compressed files for specific files or content
 function search_archive() {
     if [ $# -lt 1 ]; then
