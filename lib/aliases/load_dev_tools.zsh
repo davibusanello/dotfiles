@@ -79,12 +79,14 @@ fi
 ## General tools
 ### Direnv
 if command_exists "direnv"; then
-    echo "Loading direnv"
-    unset -f direnv_auto_load
+    if command_exists "direnv_auto_load"; then
+        unset -f direnv_auto_load
+    fi
+
     function direnv_auto_load() {
         for skip_path in "${SKIP_AUTO_LOAD_DIRENV_PATHS[@]}"; do
-            if [[ "$PWD" == "$skip_path"* ]]; then
-                eval "$(direnv export zsh --unload)"
+            if [[ "$PWD" == "$skip_path"* ]] && ([ -f ".envrc" ] || [ -f ".env" ]); then
+                eval "$(direnv disallow)"
                 return
             fi
         done
