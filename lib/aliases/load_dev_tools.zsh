@@ -18,7 +18,9 @@ NODE_VERSION_MANAGER="fnm"
 
 #### NVM
 if [ "$NODE_VERSION_MANAGER" = "nvm" ] && command_exists "nvm"; then
-    unset -f load-nvmrc
+    if command_exists "load-nvmrc"; then
+        unset -f load-nvmrc
+    fi
     function load-nvmrc() {
         # Skip auto switch version if the current path is in the skip list
         for skip_path in "${SKIP_AUTO_SWITCH_VERSION_PATHS[@]}"; do
@@ -51,9 +53,12 @@ fi
 
 #### FNM
 if [ "$NODE_VERSION_MANAGER" = "fnm" ] && command_exists "fnm"; then
+    if command_exists "fnm_auto_switch_version"; then
+        unset -f fnm_auto_switch_version
+    fi
+
     # Load fnm without using on-cd hook
     eval "$(fnm env --corepack-enabled --resolve-engines --shell=zsh)"
-    unset -f fnm_auto_switch_version
     function fnm_auto_switch_version() {
         # Skip auto switch version if the current path is in the skip list
         for skip_path in "${SKIP_AUTO_SWITCH_VERSION_PATHS[@]}"; do
