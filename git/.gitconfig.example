@@ -72,6 +72,13 @@
     lastcommit = !git rev-list -n 1 HEAD --pretty=format:%s
     wdiff = diff --word-diff --color-words
 
+    # Get the default branch name from the origin remote
+    # default-origin-branch = !git remote show origin | grep 'HEAD branch' | cut -d' ' -f5
+    default-origin-branch = !git symbolic-ref refs/remotes/origin/HEAD | sd '^refs/remotes/origin/' ''
+
+    # Sync the working branch with the default branch
+    sync-working-with-default = !git fetch && git rebase origin/$(git default-origin-branch)
+
 [merge]
 	tool = meld
 [commit]
@@ -79,8 +86,8 @@
 ;[gpg]
 ;	program = /usr/local/bin/gpg
 ; git config --show-origin --get user.email to test
-[includeIf "gitdir/i:~/ToptalProjects/"]
-	path = "gitconfig"
+[includeIf "gitdir/i:~/Projects/"]
+	path = "~/Projects/gitconfig"
 [pull]
 	ff = only
 [init]
