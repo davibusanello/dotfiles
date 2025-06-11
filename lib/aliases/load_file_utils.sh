@@ -786,3 +786,5 @@ function search_archive() {
 }
 
 alias fdpack="search_archive"
+
+alias rmf='rm -rf $(fzf -m)'
