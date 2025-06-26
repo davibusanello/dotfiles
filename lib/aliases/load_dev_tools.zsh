@@ -85,8 +85,8 @@ if command_exists "direnv"; then
 
     function direnv_auto_load() {
         for skip_path in "${SKIP_AUTO_LOAD_DIRENV_PATHS[@]}"; do
-            if [[ "$PWD" == "$skip_path"* ]] && ([ -f ".envrc" ] || [ -f ".env" ]); then
-                eval "$(direnv disallow)"
+            if [[ "$PWD" == "$skip_path"* ]]; then
+                eval "$(direnv export zsh --unload 2>/dev/null)"
                 return
             fi
         done
@@ -95,6 +95,7 @@ if command_exists "direnv"; then
     }
 
     add-zsh-hook chpwd direnv_auto_load
+    add-zsh-hook precmd direnv_auto_load
 
     # Load direnv at startup
     direnv_auto_load
