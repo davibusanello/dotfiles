@@ -100,3 +100,89 @@ if command_exists "direnv"; then
     # Load direnv at startup
     direnv_auto_load
 fi
+
+## Cursor
+
+# Kind of Crazy workaround to get Cursor to work with multiple data-profiles
+# Example of .cursor-profiles.conf file:
+# <PROJECT_ROOT_PATH>=<PROFILE_DIRECTORY_NAME>
+# <PROJECT_ROOT_PATH>=<PROFILE_DIRECTORY_NAME>
+# ...
+# <PROJECT_ROOT_PATH>=<PROFILE_DIRECTORY_NAME>
+#
+# Usage:
+# $ cursor <PROJECT_ROOT_PATH>
+#
+# Example:
+# $ cursor $HOME/Projects/Project-xyzt
+# $ cursor .
+if command_exists "cursor"; then
+    unset -f cursor 2>/dev/null
+
+    function cursor() {
+        local profile_dir=""
+        local current_dir="$PWD"
+        local config_file="$HOME/.config/.cursor-profiles.conf"
+        local base_profile_dir="$HOME/.config/.cursor-profiles"
+
+        # Check for local .cursor-profile file
+        if [[ -f ".cursor-profile" ]]; then
+            local profile_name
+            profile_name=$(cat .cursor-profile)
+            profile_dir="$base_profile_dir/$profile_name"
+        # Check configuration file
+        elif [[ -f "$config_file" ]]; then
+            local expanded_config
+            expanded_config=$(eval "cat <<EOF
+$(<"$config_file")
+EOF")
+            local best_match
+            best_match=$(echo "$expanded_config" |
+                awk -F'=' -v current="$current_dir" '
+            {
+                gsub(/^[ \t]+|[ \t]+$/, "", $1)  # trim path
+                gsub(/^[ \t]+|[ \t]+$/, "", $2)  # trim profile
+                if (current ~ "^" $1) {
+                    print length($1), $1 "=" $2
+                }
+            }' |
+                sort -rn |
+                head -1 |
+                cut -d' ' -f2-)
+
+            if [[ -n "$best_match" ]]; then
+                local profile
+                profile=$(echo "$best_match" | cut -d'=' -f2)
+                profile_dir="$base_profile_dir/$profile"
+            fi
+        fi
+
+        # Convert arguments to absolute paths
+        local args=()
+        for arg in "$@"; do
+            if [[ "$arg" == "." ]]; then
+                args+=("$current_dir")
+            elif [[ "$arg" == /* ]]; then
+                # Already absolute path
+                args+=("$arg")
+            elif [[ -e "$arg" ]]; then
+                # Convert relative path to absolute
+                args+=("$(cd "$(dirname "$arg")" && pwd)/$(basename "$arg")")
+            else
+                # Not a path, keep as is
+                args+=("$arg")
+            fi
+        done
+
+        # # Launch Cursor
+        if [[ -n "$profile_dir" ]]; then
+            echo "🎯 Using profile: ${profile_dir##*/} for ${current_dir##*/}"
+            echo "Profile directory: $profile_dir"
+            # cursor --user-data-dir="$profile_dir" --args "$@"
+            open -a Cursor --args --user-data-dir="$profile_dir" "${args[@]}"
+        else
+            echo "🎯 Using default profile for ${current_dir##*/}"
+            open -a Cursor "${args[@]}"
+        fi
+    }
+fi
