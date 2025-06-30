@@ -14,15 +14,16 @@ SYNC_REPOS_DEFAULT_MODE="${SYNC_REPOS_DEFAULT_MODE:-tag-first}"
 SYNC_REPOS_TAG_FIRST_ENABLED="${SYNC_REPOS_TAG_FIRST_ENABLED:-true}"
 
 # Generate .gitignore file
-function gi() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@; }
+function gitignore_generate_stack() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@; }
 
-# Aliases for git
+# Diff current file $2 with branch $1
+function git_diff_file_vs_branch() { git diff "$1" -- "$2"; }
 
-# Detailed git diff
-alias gidd='git wdiff'
+# Diff current file $2 with branch $1 to HEAD
+function git_diff_head_file_vs_branch() { git diff "$1...HEAD" -- "$2"; }
 
 # GitHub Create repository
-function ghrc() {
+function github_create_repository_from_current_dir() {
     gh repo create "$(basename $(pwd))" --source=. --remote=origin --push "$@"
 }
 
@@ -610,3 +611,16 @@ alias migrate-to-tags='_migrate_to_tag_sync'
 
 alias reset-default-branch='reset_default_branch'
 alias grdbh='reset_default_branch --hard'
+
+alias gi='gitignore_generate_stack'
+alias ghrc='github_create_repository_from_current_dir'
+
+# =============================================================================
+# Enhanced git diff
+
+# Detailed git diff
+alias gidd='git wdiff'
+# Diff file vs branch
+alias gdfb='git_diff_file_vs_branch'
+# Diff head file vs branch
+alias gdfbh='git_diff_head_file_vs_branch'
