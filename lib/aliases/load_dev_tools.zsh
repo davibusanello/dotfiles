@@ -186,3 +186,6 @@ EOF")
         fi
     }
 fi
+
+# Claude Code CLI
+alias claude="$HOME/.claude/local/claude"

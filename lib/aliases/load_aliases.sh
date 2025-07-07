@@ -20,3 +20,5 @@ alias fix_zsh_compinit='brew cleanup && rm -f $ZSH_COMPDUMP && omz reload'
 # Sync dirs
 alias rsync-update='rsync -avh --update --progress'
 alias sync-dir='rsync-update'
+
+alias dump_path='pwd >> ~/dump_paths.md'

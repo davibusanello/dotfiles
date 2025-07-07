@@ -152,3 +152,27 @@ function restore_zellij_sessions() {
         return 1
     fi
 }
+
+# Enable detailed debug mode for shell scripts
+# This sets PS4 to include the script name and line number for better debugging
+# Usage: enable_detailed_debug
+# To disable: disable_detailed_debug
+# Note: This is a global setting, so it will affect all scripts run in the current
+# Restore PS4 to its original value if lost `export PS4="+%N:%i>"`
+function enable_detailed_debug() {
+    export SHELL_DEBUG_MODE=true
+    export _old_ps4="$PS4"
+    # Enable detailed debug output
+    export PS4='+${(%):-%x}:$LINENO: '
+    set -x
+    echo "🔍 Detailed debug mode enabled"
+}
+
+function disable_detailed_debug() {
+    set +x
+    export PS4="$_old_ps4"
+    unset SHELL_DEBUG_MODE
+    unset _old_ps4
+    echo "🔍 Detailed debug mode disabled"
+    echo "⚠️ Detailed debug mode is not enabled"
+}
