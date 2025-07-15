@@ -296,11 +296,24 @@ function _migrate_to_tag_sync() {
 # 3. Sync with remote based on current branch status or tags
 # 4. Return to original branch if switched
 # TODO: handle multiple remotes (origin, upstream, etc.)
+#
+# Usage:
+#   sync_git_repos [OPTIONS] [REPOSITORY_PATH]
+#
+# Options:
+#   -v, --verbose       Enable verbose output
+#   -t, --tags          Force tag-based sync
+#   -b, --branches-only Force branch-based sync
+#
+# Parameters:
+#   REPOSITORY_PATH     Optional path to specific repository to sync
+#                       If not provided, syncs all repositories in current directory
 function sync_git_repos() {
     # Parse arguments
     local verbose=false
     local tag_mode=false
     local force_branch_mode=false
+    local target_repo=""
     local args=()
 
     for arg in "$@"; do
@@ -315,7 +328,11 @@ function sync_git_repos() {
             force_branch_mode=true
             ;;
         *)
-            args+=("$arg")
+            if [ -z "$target_repo" ]; then
+                target_repo="$arg"
+            else
+                args+=("$arg")
+            fi
             ;;
         esac
     done
@@ -339,13 +356,34 @@ function sync_git_repos() {
         echo ""
     fi
 
-    # Find all directories in the current path
-    for dir in */; do
-        if [ -d "$dir" ]; then
-            cd "$dir" || continue
+    # Determine directories to process
+    local dirs_to_process=()
+    if [ -n "$target_repo" ]; then
+        # Handle specific repository path
+        if [ -d "$target_repo" ]; then
+            dirs_to_process=("$target_repo")
+            if $verbose; then
+                echo "🎯 Targeting specific repository: $target_repo"
+            fi
+        else
+            echo "❌ Repository path not found: $target_repo"
+            return 1
+        fi
+    else
+        # Process all directories in current path
+        for dir in */; do
+            if [ -d "$dir" ]; then
+                dirs_to_process+=("$dir")
+            fi
+        done
+    fi
 
-            # Check if it's a git repository
-            if git rev-parse --git-dir >/dev/null 2>&1; then
+    # Process each directory
+    for dir in "${dirs_to_process[@]}"; do
+        cd "$dir" || continue
+
+        # Check if it's a git repository
+        if git rev-parse --git-dir >/dev/null 2>&1; then
                 ((repos_checked++))
 
                 if $verbose; then
@@ -530,9 +568,8 @@ function sync_git_repos() {
                 fi
             fi
 
-            # Return to original directory before processing next
-            cd "$original_dir" || exit 1
-        fi
+        # Return to original directory before processing next
+        cd "$original_dir" || exit 1
     done
 
     # Print summary
@@ -599,6 +636,7 @@ function reset_default_branch() {
 # =============================================================================
 
 # Enhanced aliases for sync operations
+# Usage: sync-repos [repository_path]
 alias sync-repos='sync_git_repos'
 alias sync-repos-v='sync_git_repos -v'
 alias sync-repos-tags='sync_git_repos -t -v'
