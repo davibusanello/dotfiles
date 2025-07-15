@@ -139,8 +139,10 @@ function _version_gt() {
 # Function to get last synced tag for a repository
 function _get_last_synced_tag() {
     local repo_path="$1"
+    local root_path="${2:-$(pwd)}"
     local repo_name=$(basename "$repo_path")
-    local state_file="${SYNC_STATE_DIR}/${repo_name}.last_tag"
+    local root_name=$(basename "$root_path")
+    local state_file="${SYNC_STATE_DIR}/${root_name}_${repo_name}.last_tag"
 
     [ -f "$state_file" ] && cat "$state_file" || echo ""
 }
@@ -148,8 +150,10 @@ function _get_last_synced_tag() {
 # Function to save last synced tag for a repository
 function _save_last_synced_tag() {
     local repo_path="$1" tag="$2"
+    local root_path="${3:-$(pwd)}"
     local repo_name=$(basename "$repo_path")
-    local state_file="${SYNC_STATE_DIR}/${repo_name}.last_tag"
+    local root_name=$(basename "$root_path")
+    local state_file="${SYNC_STATE_DIR}/${root_name}_${repo_name}.last_tag"
 
     mkdir -p "$SYNC_STATE_DIR"
     echo "$tag" >"$state_file"
@@ -161,12 +165,12 @@ function _save_last_synced_tag() {
 
 # Function to sync repository using tags
 function _sync_repo_by_tags() {
-    local repo_dir="$1" verbose="$2"
+    local repo_dir="$1" verbose="$2" root_path="$3"
     local has_changes=false
 
     # Get current tag and last synced tag
     local current_tag=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")
-    local last_synced_tag=$(_get_last_synced_tag "$repo_dir")
+    local last_synced_tag=$(_get_last_synced_tag "$repo_dir" "$root_path")
     local latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
 
     if $verbose; then
@@ -175,34 +179,62 @@ function _sync_repo_by_tags() {
         echo "   Latest available: ${latest_tag:-'none'}"
     fi
 
-    # If no last synced tag, start from current or earliest
+    # Handle first-time sync state initialization
+    local is_first_sync=false
     if [ -z "$last_synced_tag" ]; then
-        last_synced_tag="${current_tag:-$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | head -n1)}"
+        is_first_sync=true
+        # Don't set last_synced_tag yet, let the sync logic handle it
     fi
 
-    # Get all tags newer than last synced
-    local new_tags=()
-    while IFS= read -r tag; do
-        if [ -n "$tag" ] && [ -n "$last_synced_tag" ] && _version_gt "$tag" "$last_synced_tag"; then
-            new_tags+=("$tag")
-        elif [ -z "$last_synced_tag" ] && [ -n "$tag" ]; then
-            new_tags+=("$tag")
-        fi
-    done < <(_get_semantic_tags)
+    # Determine if sync is needed
+    local needs_sync=false
+    local sync_target=""
 
-    if [ ${#new_tags[@]} -gt 0 ]; then
+    if $is_first_sync; then
+        # First sync: if we're not on the latest tag, sync to it
+        if [ -n "$latest_tag" ] && [ "$current_tag" != "$latest_tag" ]; then
+            needs_sync=true
+            sync_target="$latest_tag"
+        elif [ -n "$latest_tag" ] && [ "$current_tag" = "$latest_tag" ]; then
+            # Already on latest tag, just save state
+            needs_sync=true
+            sync_target="$latest_tag"
+        fi
+    else
+        # Regular sync: check if there are newer tags
+        if [ -n "$latest_tag" ] && [ -n "$last_synced_tag" ] && _version_gt "$latest_tag" "$last_synced_tag"; then
+            needs_sync=true
+            sync_target="$latest_tag"
+        fi
+    fi
+
+    if $needs_sync; then
         has_changes=true
         if $verbose; then
-            echo "   📝 New tags found: ${new_tags[*]}"
+            if $is_first_sync && [ "$current_tag" = "$sync_target" ]; then
+                echo "   📝 Initializing sync state for current tag: $sync_target"
+            else
+                echo "   📝 Syncing to tag: $sync_target"
+            fi
         fi
 
-        # Checkout latest tag
-        if git checkout -q "$latest_tag" 2>/dev/null; then
-            _save_last_synced_tag "$repo_dir" "$latest_tag"
-            echo "🏷️  $repo_dir - Synced to tag: $latest_tag"
+        # Checkout target tag (or stay if already there)
+        if [ "$current_tag" != "$sync_target" ]; then
+            if git checkout -q "$sync_target" 2>/dev/null; then
+                _save_last_synced_tag "$repo_dir" "$sync_target" "$root_path"
+                echo "🏷️  $repo_dir - Synced to tag: $sync_target"
+            else
+                echo "❌ $repo_dir - Failed to checkout tag: $sync_target"
+                return 1
+            fi
         else
-            echo "❌ $repo_dir - Failed to checkout tag: $latest_tag"
-            return 1
+            # Already on target tag, just save state
+            _save_last_synced_tag "$repo_dir" "$sync_target" "$root_path"
+            if $is_first_sync; then
+                echo "🏷️  $repo_dir - Initialized sync state for tag: $sync_target"
+            else
+                echo "🏷️  $repo_dir - Synced to tag: $sync_target"
+            fi
         fi
     elif $verbose; then
         echo "   ✓ No new tags to sync"
@@ -223,6 +255,7 @@ function _detect_force_push() {
 # Function to show tag sync status
 function _show_tag_sync_status() {
     local repo_dir="${1:-.}"
+    local root_path="${2:-$(pwd)}"
 
     if [ ! -d "$repo_dir/.git" ]; then
         echo "❌ Not a git repository: $repo_dir"
@@ -232,7 +265,7 @@ function _show_tag_sync_status() {
     cd "$repo_dir" || return 1
 
     local current_tag=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "none")
-    local last_synced_tag=$(_get_last_synced_tag "$repo_dir")
+    local last_synced_tag=$(_get_last_synced_tag "$repo_dir" "$root_path")
     local latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
 
     echo "📊 Tag Status for $(basename "$repo_dir"):"
@@ -250,20 +283,23 @@ function _show_tag_sync_status() {
 # Function to reset tag sync state for a repository
 function _reset_tag_sync_state() {
     local repo_dir="${1:-.}"
+    local root_path="${2:-$(pwd)}"
     local repo_name=$(basename "$repo_dir")
-    local state_file="${SYNC_STATE_DIR}/${repo_name}.last_tag"
+    local root_name=$(basename "$root_path")
+    local state_file="${SYNC_STATE_DIR}/${root_name}_${repo_name}.last_tag"
 
     if [ -f "$state_file" ]; then
         rm "$state_file"
-        echo "✅ Reset tag sync state for $repo_name"
+        echo "✅ Reset tag sync state for $repo_name (from $root_name)"
     else
-        echo "ℹ️  No tag sync state found for $repo_name"
+        echo "ℹ️  No tag sync state found for $repo_name (from $root_name)"
     fi
 }
 
 # Function to migrate from branch-based to tag-based sync
 function _migrate_to_tag_sync() {
     local repo_dir="${1:-.}"
+    local root_path="${2:-$(pwd)}"
 
     if [ ! -d "$repo_dir/.git" ]; then
         echo "❌ Not a git repository: $repo_dir"
@@ -275,7 +311,7 @@ function _migrate_to_tag_sync() {
     if _has_semantic_tags; then
         local latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
         if [ -n "$latest_tag" ]; then
-            _save_last_synced_tag "$repo_dir" "$latest_tag"
+            _save_last_synced_tag "$repo_dir" "$latest_tag" "$root_path"
             echo "✅ Migrated $(basename "$repo_dir") to tag-based sync (starting from $latest_tag)"
         else
             echo "❌ No semantic tags found in $(basename "$repo_dir")"
@@ -384,106 +420,146 @@ function sync_git_repos() {
 
         # Check if it's a git repository
         if git rev-parse --git-dir >/dev/null 2>&1; then
-                ((repos_checked++))
+            ((repos_checked++))
 
-                if $verbose; then
-                    echo "🔍 Checking $dir"
-                fi
+            if $verbose; then
+                echo "🔍 Checking $dir"
+            fi
 
-                # Store original git settings
-                local original_autocrlf=$(git config --get core.autocrlf)
-                local original_safecrlf=$(git config --get core.safecrlf)
-                # Temporarily disable CRLF conversion and warnings
-                if [ -n "$original_autocrlf" ]; then
-                    git config core.autocrlf false
-                fi
-                if [ -n "$original_safecrlf" ]; then
-                    git config core.safecrlf false
-                fi
+            # Store original git settings
+            local original_autocrlf=$(git config --get core.autocrlf)
+            local original_safecrlf=$(git config --get core.safecrlf)
+            # Temporarily disable CRLF conversion and warnings
+            if [ -n "$original_autocrlf" ]; then
+                git config core.autocrlf false
+            fi
+            if [ -n "$original_safecrlf" ]; then
+                git config core.safecrlf false
+            fi
 
-                # Get current branch/tag
-                local current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
-                # Get default branch
-                local default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
+            # Get current branch/tag
+            local current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
+            # Get default branch
+            local default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
 
-                # Check for pending changes
-                if ! git diff --quiet || ! git diff --cached --quiet; then
-                    echo "📦 $dir - Stashing changes"
-                    if ! git stash push -q -m "Auto-stash by sync_git_repos on $(date)"; then
-                        echo "❌ $dir - Failed to stash changes"
-                        ((repos_failed++))
-                        # Restore git settings and continue
-                        if [ -n "$original_autocrlf" ]; then
-                            git config core.autocrlf "$original_autocrlf"
-                        fi
-                        if [ -n "$original_safecrlf" ]; then
-                            git config core.safecrlf "$original_safecrlf"
-                        fi
-                        cd "$original_dir" || exit 1
-                        continue
+            # Check for pending changes
+            if ! git diff --quiet || ! git diff --cached --quiet; then
+                echo "📦 $dir - Stashing changes"
+                if ! git stash push -q -m "Auto-stash by sync_git_repos on $(date)"; then
+                    echo "❌ $dir - Failed to stash changes"
+                    ((repos_failed++))
+                    # Restore git settings and continue
+                    if [ -n "$original_autocrlf" ]; then
+                        git config core.autocrlf "$original_autocrlf"
                     fi
+                    if [ -n "$original_safecrlf" ]; then
+                        git config core.safecrlf "$original_safecrlf"
+                    fi
+                    cd "$original_dir" || exit 1
+                    continue
                 fi
+            fi
 
-                # Fetch all changes from remote
-                git fetch --all -q
+            # Fetch all changes from remote
+            git fetch --all -q
 
-                # Determine sync strategy (Phase 7: Tag-first behavior)
-                local use_tag_sync=false
-                if ! $force_branch_mode; then
-                    if $tag_mode; then
-                        # Explicit tag mode
-                        if _has_semantic_tags; then
-                            use_tag_sync=true
-                            if $verbose; then
-                                echo "   Using tag-based sync (explicit mode)"
-                            fi
-                        else
-                            if $verbose; then
-                                echo "   ⚠️  No semantic tags found, falling back to branch sync"
-                            fi
+            # Determine sync strategy (Phase 7: Tag-first behavior)
+            local use_tag_sync=false
+            if ! $force_branch_mode; then
+                if $tag_mode; then
+                    # Explicit tag mode
+                    if _has_semantic_tags; then
+                        use_tag_sync=true
+                        if $verbose; then
+                            echo "   Using tag-based sync (explicit mode)"
                         fi
                     else
-                        # Auto-detect based on configuration and repository characteristics
-                        if [ "$SYNC_REPOS_DEFAULT_MODE" = "tags" ] && _has_semantic_tags; then
-                            use_tag_sync=true
-                            if $verbose; then
-                                echo "   Using tag-based sync (explicit tags mode)"
-                            fi
-                        elif [ "$SYNC_REPOS_DEFAULT_MODE" = "tag-first" ] && _has_semantic_tags; then
-                            # NEW: Tag-first behavior - always use tags when available
-                            use_tag_sync=true
-                            if $verbose; then
-                                echo "   Using tag-based sync (tag-first mode)"
-                            fi
-                        elif [ "$SYNC_REPOS_DEFAULT_MODE" = "auto" ] && _has_semantic_tags && _detect_force_push; then
-                            # Legacy auto mode: only use tags when force push detected
-                            use_tag_sync=true
-                            if $verbose; then
-                                echo "   🔍 Force push detected, using tag-based sync"
-                            fi
-                        elif $verbose && _has_semantic_tags && [ "$SYNC_REPOS_DEFAULT_MODE" = "auto" ]; then
-                            echo "   Repository has tags but no force push detected, using branch sync (legacy auto mode)"
-                        elif $verbose && _has_semantic_tags; then
-                            echo "   Repository has tags but using branch sync (mode: $SYNC_REPOS_DEFAULT_MODE)"
+                        if $verbose; then
+                            echo "   ⚠️  No semantic tags found, falling back to branch sync"
                         fi
                     fi
+                else
+                    # Auto-detect based on configuration and repository characteristics
+                    if [ "$SYNC_REPOS_DEFAULT_MODE" = "tags" ] && _has_semantic_tags; then
+                        use_tag_sync=true
+                        if $verbose; then
+                            echo "   Using tag-based sync (explicit tags mode)"
+                        fi
+                    elif [ "$SYNC_REPOS_DEFAULT_MODE" = "tag-first" ] && _has_semantic_tags; then
+                        # NEW: Tag-first behavior - always use tags when available
+                        use_tag_sync=true
+                        if $verbose; then
+                            echo "   Using tag-based sync (tag-first mode)"
+                        fi
+                    elif [ "$SYNC_REPOS_DEFAULT_MODE" = "auto" ] && _has_semantic_tags && _detect_force_push; then
+                        # Legacy auto mode: only use tags when force push detected
+                        use_tag_sync=true
+                        if $verbose; then
+                            echo "   🔍 Force push detected, using tag-based sync"
+                        fi
+                    elif $verbose && _has_semantic_tags && [ "$SYNC_REPOS_DEFAULT_MODE" = "auto" ]; then
+                        echo "   Repository has tags but no force push detected, using branch sync (legacy auto mode)"
+                    elif $verbose && _has_semantic_tags; then
+                        echo "   Repository has tags but using branch sync (mode: $SYNC_REPOS_DEFAULT_MODE)"
+                    fi
                 fi
+            fi
 
-                local has_changes=false
+            local has_changes=false
 
-                # Execute appropriate sync strategy
-                if $use_tag_sync; then
-                    local tag_sync_result=$(_sync_repo_by_tags "$(pwd)" "$verbose")
-                    if [ "$tag_sync_result" = "true" ]; then
-                        has_changes=true
+            # Execute appropriate sync strategy
+            if $use_tag_sync; then
+                local tag_sync_result=$(_sync_repo_by_tags "$(pwd)" "$verbose" "$original_dir")
+                if [ "$tag_sync_result" = "true" ]; then
+                    has_changes=true
+                fi
+            else
+                # Original branch-based sync logic
+                local before_rev=""
+                local after_rev=""
+
+                # If we're on the default branch
+                if [ "$current_ref" = "$default_branch" ]; then
+                    # Store the current HEAD commit before pulling
+                    before_rev=$(git rev-parse HEAD)
+
+                    if ! git pull -q origin "$default_branch"; then
+                        echo "❌ $dir - Failed to sync $default_branch"
+                        ((repos_failed++))
+                    else
+                        # Store the HEAD commit after pulling
+                        after_rev=$(git rev-parse HEAD)
+
+                        # Check if there were any changes
+                        if [ "$before_rev" != "$after_rev" ]; then
+                            has_changes=true
+                            # Show a summary of changes
+                            if $verbose; then
+                                echo "   📝 Changes pulled from remote:"
+                                git --no-pager log --oneline --graph --decorate --abbrev-commit "$before_rev..$after_rev" | head -n 5
+                            fi
+                        fi
                     fi
                 else
-                    # Original branch-based sync logic
-                    local before_rev=""
-                    local after_rev=""
+                    # Sync current branch/tag
+                    local current_before_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
 
-                    # If we're on the default branch
-                    if [ "$current_ref" = "$default_branch" ]; then
+                    if ! git fetch -q origin "$current_ref:$current_ref" 2>/dev/null; then
+                        if $verbose; then
+                            echo "   ℹ️  Could not sync $current_ref directly"
+                        fi
+                    else
+                        local current_after_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
+                        if [ -n "$current_before_rev" ] && [ -n "$current_after_rev" ] && [ "$current_before_rev" != "$current_after_rev" ]; then
+                            has_changes=true
+                            if $verbose; then
+                                echo "   📝 Changes fetched to $current_ref"
+                            fi
+                        fi
+                    fi
+
+                    # Switch to default branch and sync
+                    if git checkout -q "$default_branch"; then
                         # Store the current HEAD commit before pulling
                         before_rev=$(git rev-parse HEAD)
 
@@ -499,74 +575,34 @@ function sync_git_repos() {
                                 has_changes=true
                                 # Show a summary of changes
                                 if $verbose; then
-                                    echo "   📝 Changes pulled from remote:"
+                                    echo "   📝 Changes pulled to $default_branch:"
                                     git --no-pager log --oneline --graph --decorate --abbrev-commit "$before_rev..$after_rev" | head -n 5
                                 fi
                             fi
                         fi
+                        git checkout -q "$current_ref"
                     else
-                        # Sync current branch/tag
-                        local current_before_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
-
-                        if ! git fetch -q origin "$current_ref:$current_ref" 2>/dev/null; then
-                            if $verbose; then
-                                echo "   ℹ️  Could not sync $current_ref directly"
-                            fi
-                        else
-                            local current_after_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
-                            if [ -n "$current_before_rev" ] && [ -n "$current_after_rev" ] && [ "$current_before_rev" != "$current_after_rev" ]; then
-                                has_changes=true
-                                if $verbose; then
-                                    echo "   📝 Changes fetched to $current_ref"
-                                fi
-                            fi
-                        fi
-
-                        # Switch to default branch and sync
-                        if git checkout -q "$default_branch"; then
-                            # Store the current HEAD commit before pulling
-                            before_rev=$(git rev-parse HEAD)
-
-                            if ! git pull -q origin "$default_branch"; then
-                                echo "❌ $dir - Failed to sync $default_branch"
-                                ((repos_failed++))
-                            else
-                                # Store the HEAD commit after pulling
-                                after_rev=$(git rev-parse HEAD)
-
-                                # Check if there were any changes
-                                if [ "$before_rev" != "$after_rev" ]; then
-                                    has_changes=true
-                                    # Show a summary of changes
-                                    if $verbose; then
-                                        echo "   📝 Changes pulled to $default_branch:"
-                                        git --no-pager log --oneline --graph --decorate --abbrev-commit "$before_rev..$after_rev" | head -n 5
-                                    fi
-                                fi
-                            fi
-                            git checkout -q "$current_ref"
-                        else
-                            echo "❌ $dir - Failed to switch to $default_branch"
-                            ((repos_failed++))
-                        fi
+                        echo "❌ $dir - Failed to switch to $default_branch"
+                        ((repos_failed++))
                     fi
                 fi
-
-                if $has_changes; then
-                    echo "✅ $dir - Synced with remote"
-                    ((repos_updated++))
-                elif $verbose; then
-                    echo "✓ $dir - Already up to date"
-                fi
-
-                # Restore original git settings
-                if [ -n "$original_autocrlf" ]; then
-                    git config core.autocrlf "$original_autocrlf"
-                fi
-                if [ -n "$original_safecrlf" ]; then
-                    git config core.safecrlf "$original_safecrlf"
-                fi
             fi
+
+            if $has_changes; then
+                echo "✅ $dir - Synced with remote"
+                ((repos_updated++))
+            elif $verbose; then
+                echo "✓ $dir - Already up to date"
+            fi
+
+            # Restore original git settings
+            if [ -n "$original_autocrlf" ]; then
+                git config core.autocrlf "$original_autocrlf"
+            fi
+            if [ -n "$original_safecrlf" ]; then
+                git config core.safecrlf "$original_safecrlf"
+            fi
+        fi
 
         # Return to original directory before processing next
         cd "$original_dir" || exit 1
@@ -593,7 +629,8 @@ function sync_git_repos() {
 #   reset-default-branch --rebase
 #   reset-default-branch --hard
 function reset_default_branch() {
-    local default_branch=$(git_default_branch)
+    local default_branch
+    default_branch=$(git_default_branch)
     local use_hard_reset=false
     local args=()
 
