@@ -14,7 +14,7 @@ SYNC_REPOS_DEFAULT_MODE="${SYNC_REPOS_DEFAULT_MODE:-tag-first}"
 SYNC_REPOS_TAG_FIRST_ENABLED="${SYNC_REPOS_TAG_FIRST_ENABLED:-true}"
 
 # Generate .gitignore file
-function gitignore_generate_stack() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@; }
+function gitignore_generate_stack() { curl -sLw n https://www.toptal.com/developers/gitignore/api/"$*"; }
 
 # Diff current file $2 with branch $1
 function git_diff_file_vs_branch() { git diff "$1" -- "$2"; }
@@ -24,7 +24,7 @@ function git_diff_head_file_vs_branch() { git diff "$1...HEAD" -- "$2"; }
 
 # GitHub Create repository
 function github_create_repository_from_current_dir() {
-    gh repo create "$(basename $(pwd))" --source=. --remote=origin --push "$@"
+    gh repo create "$(basename "$(pwd)")" --source=. --remote=origin --push "$@"
 }
 
 function git_default_branch() {
@@ -668,6 +668,52 @@ function reset_default_branch() {
     echo "✅ Successfully reset $default_branch"
 }
 
+# Function to get all changed files in the current branch including staged changes that match an optional given pattern
+# Usage: git_current_changed_files_pattern <pattern>
+# Example: git_current_changed_files_pattern 'src/.*\.js'
+# Example excluding jsx files:
+# Example: git_current_changed_files_pattern '.js$'
+function git_current_changed_files_pattern() {
+    local pattern="$1"
+    if [ -z "$pattern" ]; then
+        split_lined_list_into_single_line "$(git status --porcelain | cut -c4-)"
+    else
+        split_lined_list_into_single_line "$(git status --porcelain | cut -c4- | rg "$pattern")"
+    fi
+}
+
+# Function to get all changed files in the current branch compared to a given branch, excluding deleted or old moved file paths changes
+# Usage: git_current_branch_changed_files_vs_branch_pattern <branch> [pattern]
+# Example: git_current_branch_changed_files_vs_branch_pattern 'main'
+# Example: git_current_branch_changed_files_vs_branch_pattern 'develop' 'src/.*\.js'
+# Example excluding jsx files:
+# Example: git_current_branch_changed_files_vs_branch_pattern 'main' '.js$'
+function git_current_branch_changed_files_vs_branch_pattern() {
+    local branch="$1"
+    if [ -z "$branch" ]; then
+        echo "Usage: git_current_branch_changed_files_vs_branch_pattern <branch> [pattern]"
+        return 1
+    fi
+
+    local pattern="$2"
+    if [ -z "$pattern" ]; then
+        split_lined_list_into_single_line "$(git diff --name-only --diff-filter=AMR "$branch")"
+    else
+        split_lined_list_into_single_line "$(git diff --name-only --diff-filter=AMR "$branch" | rg "$pattern")"
+    fi
+}
+
+# Function to get all changed files in the current branch compared to the default branch that match a given pattern, excluding deleted or old moved file paths changes
+# Pattern is optional, if not provided, all changed files are returned
+# Usage: git_current_branch_changed_files_vs_default_branch_pattern <pattern>
+# Example: git_current_branch_changed_files_vs_default_branch_pattern 'src/.*\.js'
+# Example: git_current_branch_changed_files_vs_default_branch_pattern '.md'
+# Exempale excluding jsx files:
+# Example: git_current_branch_changed_files_vs_default_branch_pattern '.js$'
+function git_current_branch_changed_files_vs_default_branch_pattern() {
+    git_current_branch_changed_files_vs_branch_pattern "$(git_default_branch)" "$@"
+}
+
 # =============================================================================
 # Aliases and Commands
 # =============================================================================
@@ -699,3 +745,15 @@ alias gidd='git wdiff'
 alias gdfb='git_diff_file_vs_branch'
 # Diff head file vs branch
 alias gdfbh='git_diff_head_file_vs_branch'
+# Diff file vs HEAD
+alias gdfh='git diff HEAD --'
+# List changed files in current branch
+alias gcf='git_current_changed_files_pattern'
+alias g_list_changed_files='git_current_changed_files_pattern'
+# List changed files in current branch vs default branch
+alias gcfdb='git_current_branch_changed_files_vs_default_branch_pattern'
+alias g_list_changed_files_vs_default='git_current_branch_changed_files_vs_default_branch_pattern'
+# List changed files in current branch vs specific branch
+alias gcfb='git_current_branch_changed_files_vs_branch_pattern'
+# List changed files in current branch vs specific branch
+alias g_list_changed_files_vs_branch='git_current_branch_changed_files_vs_branch_pattern'
