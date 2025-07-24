@@ -65,28 +65,35 @@ export HIST_STAMPS="mm/dd/yyyy"
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 
-# Codestats key
-CODESTATS_API_KEY=""
-
 # Per directory history keybind Ctrl+H
 PER_DIRECTORY_HISTORY_TOGGLE=^H
 HISTIGNORE="&:ls:[bf]g:exit:reset:clear:cd:cd ..:cd..:zh"
 HIST_IGNORE_SPACE="true"
 
+# History search enhancements
+ZSH_FZF_HISTORY_SEARCH_DATES_IN_SEARCH=1
+
 # ZOXIDE_CMD_OVERRIDE
 ZOXIDE_CMD_OVERRIDE="cd"
+
+# Load private envs
+if [ -f "$HOME/.vp-env" ]; then
+# shellcheck disable=SC1091
+    \. "$HOME/.vp-env"
+fi
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose fnm npm yarn rbenv gem rails mix colored-man-pages zoxide zsh-autosuggestions zsh-syntax-highlighting rust per-directory-history cp pyenv bundler asdf poetry)
+plugins=(git git-extras common-aliases compleat dircycle dirhistory encode64 history colorize docker docker-compose bun podman fnm npm yarn rbenv gem rails mix colored-man-pages zoxide zsh-autosuggestions zsh-syntax-highlighting rust per-directory-history cp pyenv bundler asdf poetry)
 
 # User configuration
 
 export MANPATH="/usr/local/man:$MANPATH"
 
-source $ZSH/oh-my-zsh.sh
+# shellcheck disable=SC1091
+source "$ZSH/oh-my-zsh.sh"
 
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
@@ -106,9 +113,10 @@ fi
 export ARCHFLAGS="-arch x86_64"
 
 # ssh
-export SSH_KEY_PATH="~/.ssh/dsa_id"
+export SSH_KEY_PATH="$HOME/.ssh/dsa_id"
 # gpg
-export GPG_TTY=$(tty)
+GPG_TTY="$(tty)"
+export GPG_TTY
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -116,17 +124,10 @@ export GPG_TTY=$(tty)
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-alias zshconfig="$EDITOR ~/.zshrc"
-alias ohmyzsh="$EDITOR ~/.oh-my-zsh"
+alias zshconfig='$EDITOR ~/.zshrc'
+alias ohmyzsh='$EDITOR ~/.oh-my-zsh'
 
 # Personal
-# TODO: It was needed for Tilix when using Linux as main OS
-# TODO: Check if this is still needed
-#source /etc/profile.d/vte-2.91.sh
-if [ $TILIX_ID ] || [ $VTE_VERSION ]; then
-    source /etc/profile.d/vte.sh
-fi
-
 export HISTSIZE=5000
 export SAVEHIST=10000
 # History display line and date time
@@ -139,14 +140,22 @@ export PSQL_EDITOR=$EDITOR
 if [ -z "$DOTFILES_PATH" ]; then
     export DOTFILES_PATH="$HOME/.dotfiles"
 fi
-source $DOTFILES_PATH/lib/os_identifier.sh
+
+# Set script verbosity level
+# 0 -> Nothing
+# 1 -> Basic info
+# 2 -> Detailed info
+DOTFILES_SCRIPT_LOG_LEVEL=${DOTFILES_SCRIPT_LOG_LEVEL:-1}
+source  "$DOTFILES_PATH/lib/base_functions.sh"
+source "$DOTFILES_PATH/lib/os_identifier.sh"
 
 USER_LOCAL_BIN=$HOME/.local/bin
 export PATH=$PATH:$USER_LOCAL_BIN
 
 # Rust environment
 if [ -f "$HOME/.cargo/env" ]; then
-    source $HOME/.cargo/env
+    # shellcheck source=/dev/null
+    source "$HOME/.cargo/env"
 fi
 
 MYBIN=$HOME/bin
@@ -155,12 +164,20 @@ export PATH=$PATH:$MYBIN
 # Enables iex shell history
 export ERL_AFLAGS="-kernel shell_history enabled"
 # My personal aliases librar
-source $DOTFILES_PATH/lib/aliases/loader.sh
+source "$DOTFILES_PATH/lib/aliases/loader.sh"
 
 # Ruby gems
 # TODO: Check if this is still needed
-CURRENT_RUBYGEMS_PATH=$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
-export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
+add_ruby_gems_to_path() {
+    if command -v ruby >/dev/null 2>&1; then
+        local rubygems_path
+        rubygems_path="$(ruby -r rubygems -e 'puts Gem.user_dir' 2>/dev/null)/bin"
+        if [[ -d "$rubygems_path" && ":$PATH:" != *":$rubygems_path:"* ]]; then
+            export PATH="$PATH:$rubygems_path"
+        fi
+    fi
+}
+add_ruby_gems_to_path
 
 # Tesseract
 # TODO: Check if this is still needed
@@ -173,6 +190,11 @@ export PATH=$PATH:$CURRENT_RUBYGEMS_PATH
 export FZF_DEFAULT_OPTS="--height=70% --preview='bat --color=always --style=header,grid --line-range :300 {}' --preview-window=right:60%:wrap"
 export FZF_DEFAULT_COMMAND="rg --files --line-number"
 # export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+export FZF_CTRL_R_OPTS="
+  --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'
+  --color header:italic
+  --header 'Press CTRL-Y to copy command into clipboard'"
 
 autoload -U add-zsh-hook
 
@@ -188,10 +210,11 @@ fpath+=~/.zfunc
 export HISTTIMEFORMAT='%F %T '
 
 # Keep it at the ending of the file
-export GPG_TTY=$(tty)
+# shellcheck source=/dev/null
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
 # Load fzf
+#  shellcheck source=/dev/null
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Zellij
@@ -203,12 +226,16 @@ test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell
 
 # Google Cloud SDK
 # The next line updates PATH for the Google Cloud SDK.
+# shellcheck source=/dev/null
 if [ -f "${HOME}/google-cloud-sdk/path.zsh.inc" ]; then . "${HOME}/google-cloud-sdk/path.zsh.inc"; fi
 
 # The next line enables shell command completion for gcloud.
+# shellcheck source=/dev/null
 if [ -f "${HOME}/google-cloud-sdk/completion.zsh.inc" ]; then . "${HOME}/google-cloud-sdk/completion.zsh.inc"; fi
 
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
+# Following shellcheck will break completations
+# shellcheck disable=SC2206
 fpath=("${HOME}/.docker/completions" $fpath)
 autoload -Uz compinit
 compinit

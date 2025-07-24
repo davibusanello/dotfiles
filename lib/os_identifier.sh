@@ -9,5 +9,5 @@ case "${unameOut}" in
     *)          machine="UNKNOWN:${unameOut}"
 esac
 
-echo "Loading $machine OS specific scripts..."
+log_detail "Loading $machine OS specific scripts..."
 source "$(dirname $0)/os/$machine.sh"
