@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
+# Unset aliases and functions that might conflict
+# TODO: It will be extracted to a separate file later
+
+unalias sd # Conflict with sd binary of sed rust replacement
+
 # Utils functions
+
+function split_lined_list_into_single_line() {
+    # Split a multi-line string into a single line with spaces
+    local input="$1"
+    echo "$input" | tr '\n' ' ' | sed 's/  */ /g' | xargs
+}
 
 # Helper function to check if a command exists
 function command_exists() {

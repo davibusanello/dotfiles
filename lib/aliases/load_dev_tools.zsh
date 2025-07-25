@@ -189,3 +189,8 @@ fi
 
 # Claude Code CLI
 alias claude="$HOME/.claude/local/claude"
+
+# Kiro
+if command_exists "kiro"; then
+    [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
+fi
