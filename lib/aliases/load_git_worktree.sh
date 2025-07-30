@@ -29,6 +29,9 @@
 # Configuration Variables
 # =============================================================================
 
+# Default configuration variables for worktree behavior
+# WORKTREE_DEFAULT_BASE_DIR="~/worktrees/"
+
 # Core behavior
 WORKTREE_DEFAULT_BASE_DIR="${WORKTREE_DEFAULT_BASE_DIR:-../worktrees/}"
 WORKTREE_AUTO_CD="${WORKTREE_AUTO_CD:-true}"
@@ -126,6 +129,7 @@ function _git_worktree_exists() {
 function git_worktree_create() {
     local name="$1"
     local base="${2:-HEAD}"
+    local use_existing_branch="${3:-auto}"
 
     if [[ -z "$name" ]]; then
         echo "❌ Please specify worktree name"
@@ -148,8 +152,33 @@ function git_worktree_create() {
         fi
     fi
 
-    # Create with new branch name
-    if "${create_cmd[@]}" -b "$name" "$worktree_path" "$base"; then
+    # Determine if we should use existing branch or create new one
+    local branch_exists=false
+    if git show-ref --verify --quiet "refs/heads/$name"; then
+        branch_exists=true
+    fi
+
+    local create_success=false
+
+    if [[ "$use_existing_branch" == "true" ]] || [[ "$use_existing_branch" == "auto" && "$branch_exists" == "true" ]]; then
+        if [[ "$branch_exists" == "true" ]]; then
+            echo "📍 Using existing branch '$name'"
+            if "${create_cmd[@]}" "$worktree_path" "$name"; then
+                create_success=true
+            fi
+        else
+            echo "❌ Branch '$name' does not exist"
+            return 1
+        fi
+    else
+        # Create with new branch name
+        echo "🌱 Creating new branch '$name' from '$base'"
+        if "${create_cmd[@]}" -b "$name" "$worktree_path" "$base"; then
+            create_success=true
+        fi
+    fi
+
+    if [[ "$create_success" == "true" ]]; then
         echo "✓ Worktree '$name' created at $worktree_path"
 
         # Setup worktree-specific configuration if enabled
@@ -176,6 +205,28 @@ function git_worktree_create() {
         echo "❌ Failed to create worktree '$name'"
         return 1
     fi
+}
+
+# Create worktree using an existing branch
+function git_worktree_checkout() {
+    local branch_name="$1"
+    local worktree_name="${2:-$branch_name}"
+
+    if [[ -z "$branch_name" ]]; then
+        echo "❌ Please specify branch name"
+        return 1
+    fi
+
+    # Check if branch exists
+    if ! git show-ref --verify --quiet "refs/heads/$branch_name"; then
+        echo "❌ Branch '$branch_name' does not exist"
+        echo "Available branches:"
+        git branch -a | head -10
+        return 1
+    fi
+
+    # Use the existing branch creation function with explicit flag
+    git_worktree_create "$worktree_name" "$branch_name" "true"
 }
 
 # Remove worktree with safety checks
@@ -628,10 +679,11 @@ function git_worktree_debug() {
 # =============================================================================
 
 # Core operations (following git_ pattern like your load_git.sh)
-alias gwtc='git_worktree_create' # Create worktree
-alias gwtr='git_worktree_remove' # Remove worktree
-alias gwtl='git_worktree_list'   # List worktrees
-alias gwts='git_worktree_switch' # Switch to worktree
+alias gwtc='git_worktree_create'   # Create worktree (new branch)
+alias gwtco='git_worktree_checkout' # Create worktree (existing branch)
+alias gwtr='git_worktree_remove'   # Remove worktree
+alias gwtl='git_worktree_list'     # List worktrees
+alias gwts='git_worktree_switch'   # Switch to worktree
 
 # Workflow patterns
 alias gwtf='git_worktree_feature'    # Feature workflow
@@ -665,20 +717,21 @@ git_worktree_help() {
 🚀 Git Worktree Productivity Suite
 
 Quick Start:
-  gwtc <name> [base]   # Create worktree
-  gwts <name>          # Switch to worktree
-  gwtl                 # List all worktrees
-  gwtr <name>          # Remove worktree
+  gwtc <name> [base]     # Create worktree with new branch
+  gwtco <branch> [name]  # Create worktree from existing branch
+  gwts <name>            # Switch to worktree
+  gwtl                   # List all worktrees
+  gwtr <name>            # Remove worktree
 
 Workflows:
-  gwtf <name>          # Create feature worktree
-  gwth <name>          # Create hotfix worktree
-  gwte <name>          # Create experiment worktree
+  gwtf <name>            # Create feature worktree
+  gwth <name>            # Create hotfix worktree
+  gwte <name>            # Create experiment worktree
 
 Interactive (requires fzf):
-  gwtfzf               # Interactive switching
-  gwtfzfc              # Interactive creation
-  git-worktree-name    # Naming assistant
+  gwtfzf                 # Interactive switching
+  gwtfzfc                # Interactive creation
+  git-worktree-name      # Naming assistant
 
 Maintenance:
   git-worktree-health    # Health check
