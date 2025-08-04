@@ -179,6 +179,81 @@ log_detail "=================================="
 # Additional Homebrew-based tools setup
 log_detail "Configuring additional Homebrew-based tools..."
 
+# Function to create g-prefixed symlinks for uutils-coreutils
+# It makes the shell compilant with building tools that are dependent on coreutils package with `g-prefixed` tools
+# Usage:
+#   create_g_links        (Skips creating links that already exist)
+#   create_g_links -f     (Overwrites any existing conflicting files/links)
+# shellcheck disable=SC2120
+create_g_links() {
+    local source_dir="$BREW_OPT_PATH/uutils-coreutils/libexec/uubin"
+    local target_dir="$BREW_BASE/bin"
+
+    local ln_opts="-s"
+    if [[ "$1" == "-f" || "$1" == "--force" ]]; then
+        echo "Force flag detected. Will overwrite existing links."
+        ln_opts="-sf" # -s for symbolic, -f for force/overwrite
+    fi
+
+    log_detail "Scanning for utilities in $source_dir..."
+
+    # shellcheck disable=SC2045
+    for util in $(ls "$source_dir"); do
+        local source_file="$source_dir/$util"
+        local target_link="$target_dir/g$util"
+
+        # Check if a file with the g-prefix already exists
+        if [ -e "$target_link" ] && [[ "$ln_opts" != "-sf" ]]; then
+            log_detail "Skipping: '$target_link' already exists. Use -f to overwrite."
+        else
+            log_detail "Creating link: $target_link -> $source_file"
+            ln $ln_opts "$source_file" "$target_link"
+        fi
+    done
+
+    log_detail "Done creating symlinks."
+}
+
+# Function to clean up the g-prefixed symlinks created
+# Usage:
+#   remove_g_links        (Prompts for confirmation if rm is aliased to rm -i)
+#   remove_g_links -f     (Removes links without confirmation)
+remove_g_links() {
+    local source_dir="$BREW_OPT_PATH/uutils-coreutils/libexec/uubin"
+    local target_dir="$BREW_BASE/bin"
+
+    local force_remove=false
+    if [[ "$1" == "-f" || "$1" == "--force" ]]; then
+        echo "Force flag detected. Bypassing confirmation."
+        force_remove=true
+    fi
+
+    log_detail "Scanning for symlinks to remove from $target_dir..."
+
+    # shellcheck disable=SC2045
+    for util in $(ls "$source_dir"); do
+        local source_file="$source_dir/$util"
+        local target_link="$target_dir/g$util"
+
+        # Check if the target is a symbolic link pointing to our source file
+        if [ -L "$target_link" ] && [ "$(readlink "$target_link")" = "$source_file" ]; then
+            log_info "Removing link: $target_link"
+            if [ "$force_remove" = true ]; then
+                # Use 'command' to execute the real rm, bypassing any aliases like 'rm -i'
+                command rm -f "$target_link"
+            else
+                # Use the regular 'rm', which will trigger the confirmation alias
+                rm "$target_link"
+            fi
+        elif [ -L "$target_link" ]; then
+            # This addresses the case where a g-prefixed link exists but points somewhere else
+            log_info "Skipping: '$target_link' is a symlink but does not point to the expected uutils binary."
+        fi
+    done
+
+    log_info "Done cleaning up symlinks."
+}
+
 ADDITIONAL_PATHS=()
 
 # Additional libraries
@@ -189,6 +264,7 @@ if [ -d "$BREW_OPT_PATH/uutils-coreutils/libexec/uubin" ]; then
     # UUTILS_COREUTILS_PATH="$BREW_OPT_PATH/uutils-coreutils/libexec/uubin"
     # export PATH="$UUTILS_COREUTILS_PATH:$PATH"
     # echo "Current path: $PATH"
+    create_g_links
 fi
 
 # OpenSSL
