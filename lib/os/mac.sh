@@ -318,19 +318,19 @@ function add_additional_homebrew_paths() {
 
     for homebrew_path in "${ADDITIONAL_PATHS[@]}"; do
         if [ -d "$homebrew_path" ]; then
-            # Check if path is already in PATH to avoid duplicates
-            if [[ ":$PATH:" != *":$homebrew_path:"* ]]; then
-                new_paths="$new_paths:$homebrew_path"
-                log_detail "  Added: $homebrew_path"
-            fi
+            # Remove the path from PATH if it already exists to avoid duplicates
+            PATH=$(echo "$PATH" | sed -e "s|:$homebrew_path:|:|g" -e "s|^$homebrew_path:||" -e "s|:$homebrew_path$||" -e "s|^$homebrew_path$||")
+            new_paths="$new_paths:$homebrew_path"
+            log_detail "  Added: $homebrew_path"
         fi
     done
 
     new_paths="${new_paths#:}" # Remove leading colon if present
 
     if [ -n "$new_paths" ]; then
+        # Prepend new paths to ensure they take precedence over system paths
         export PATH="$new_paths:$PATH"
-        log_info "Additional Homebrew paths configured"
+        log_info "Additional Homebrew paths configured with priority"
 
         # Validate that basic system commands are still accessible
         if ! command -v find >/dev/null 2>&1; then
