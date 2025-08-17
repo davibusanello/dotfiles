@@ -3,7 +3,10 @@
 # Unset aliases and functions that might conflict
 # TODO: It will be extracted to a separate file later
 
-unalias sd # Conflict with sd binary of sed rust replacement
+# Only unalias if the alias exists
+if alias sd >/dev/null 2>&1; then
+    unalias sd # Conflict with sd binary of sed rust replacement
+fi
 
 # Utils functions
 

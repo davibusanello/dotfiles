@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Custom log directory
+export CUSTOM_LOG_DIR="$HOME/logs"
+if [[ ! -d "$CUSTOM_LOG_DIR" ]]; then
+    mkdir -p "$CUSTOM_LOG_DIR"
+fi
+
 # Base functions
 
 # Set script verbosity level
