@@ -21,6 +21,39 @@ function command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Helper function to check if file was modified in the last hour
+# Relies on GNU coreutils being available in PATH (set up by mac.sh)
+function was_recently_modified() {
+    local file="$1"
+    local hours_ago="${2:-1}"  # Default to 1 hour if not specified
+    local real_file
+    local HOUR_IN_SECONDS=$((3600 * hours_ago))
+    local current_time=$(date +%s)
+
+    # If it's a symlink, get the real file path using GNU readlink
+    if [ -L "$file" ]; then
+        real_file=$(readlink -f "$file")
+    else
+        real_file="$file"
+    fi
+
+    # Check if file exists
+    if [ ! -f "$real_file" ]; then
+        return 1
+    fi
+
+    # Use GNU stat (should be available via uutils-coreutils)
+    local file_time=$(stat -c %Y "$real_file" 2>/dev/null)
+
+    # Check if stat command succeeded and returned a number
+    if [ -z "$file_time" ] || ! [[ "$file_time" =~ ^[0-9]+$ ]]; then
+        return 1
+    fi
+
+    local time_diff=$((current_time - file_time))
+    [ $time_diff -le $HOUR_IN_SECONDS ]
+}
+
 # Reload shell configuration without full dotfiles reload
 function reload() {
     echo "🔄 Checking for recent changes from last hour..."
@@ -29,29 +62,6 @@ function reload() {
     local needs_reload=false
     local shell_reloaded=false
     local dotfiles_path="${DOTFILES_PATH:-$HOME/.dotfiles}"
-
-    # Helper function to check if file was modified in the last hour
-    # Now follows symbolic links and handles both the symlink and real file
-    function was_recently_modified() {
-        local file="$1"
-        local real_file
-
-        # If it's a symlink, get the real file path
-        if [ -L "$file" ]; then
-            real_file=$(readlink -f "$file")
-        else
-            real_file="$file"
-        fi
-
-        # Check if file exists
-        if [ ! -f "$real_file" ]; then
-            return 1
-        fi
-
-        local file_time=$(stat -f %m "$real_file")
-        local time_diff=$((current_time - file_time))
-        [ $time_diff -le $HOUR_IN_SECONDS ]
-    }
 
     # Check and reload shell specific config first
     if [ -n "$ZSH_VERSION" ]; then
