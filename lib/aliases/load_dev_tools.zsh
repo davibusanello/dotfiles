@@ -103,6 +103,14 @@ fi
 
 ## Cursor
 
+# If Cursor Agent is detected, disable ohmyzsh theme and set pager to cat to avoid issues
+if [[ -n "$CURSOR_AGENT" ]] || [[ -n "$CURSOR_TRACE_ID" ]] || [[ -n "$KIRO_AGENT" ]] || [ "${AGENT_RUN:-}" = "1" ]; then
+    export _ZO_DOCTOR=0
+    export ZSH_THEME=""
+    export GIT_PAGER=cat
+    export PAGER=cat
+fi
+
 # Kind of Crazy workaround to get Cursor to work with multiple data-profiles
 # Example of .cursor-profiles.conf file:
 # <PROJECT_ROOT_PATH>=<PROFILE_DIRECTORY_NAME>
