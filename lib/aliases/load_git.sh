@@ -68,7 +68,13 @@ function git_default_branch() {
 #   1 - Invalid repository URL
 function simplified_git_clone() {
     # Remove trailing slash if present and clean up the URL
-    local url=$(echo "$1" | sed 's/\/$//')
+    local url
+    url=$(echo "$1" | sed 's/\/$//')
+    # Git CLI app, prefer gix if available
+    local git_cmd="git"
+    if command_exists gix; then
+        git_cmd="gix"
+    fi
 
     # Add .git suffix if not present for HTTPS URLs
     if [[ "$url" =~ ^https?:// ]] && [[ ! "$url" =~ \.git$ ]]; then
@@ -77,14 +83,17 @@ function simplified_git_clone() {
 
     # Check if it's a valid git repository URL (including browser URLs)
     if [[ "$url" =~ ^(https://|http://|git@)([A-Za-z0-9.-]+\.[A-Za-z]{2,})(:[0-9]+)?(/|:).+ ]]; then
-        local repo_name=$(basename "$url" .git)
+        local repo_name
+        local repo_path
+        local repo_user
+        repo_name=$(basename "$url" .git)
 
         # Extract repository user and name
-        local repo_path=$(echo "$url" | sed 's|^https://[^/]*/||' | sed 's|^http://[^/]*/||' | sed 's|^git@[^:]*:||' | sed 's/.git$//')
+        repo_path=$(echo "$url" | sed 's|^https://[^/]*/||' | sed 's|^http://[^/]*/||' | sed 's|^git@[^:]*:||' | sed 's/.git$//')
 
         # Check if the repository path contains a user part
         if [[ "$repo_path" =~ ^[^/]+/[^/]+$ ]]; then
-            local repo_user=$(echo "$repo_path" | cut -d'/' -f1)
+            repo_user=$(echo "$repo_path" | cut -d'/' -f1)
             local custom_dir="${repo_user}_${repo_name}"
         else
             local custom_dir="$repo_name"
@@ -94,12 +103,12 @@ function simplified_git_clone() {
 
         # If no additional parameters or only "." is provided
         if [ $# -eq 1 ]; then
-            git clone "$url" "$custom_dir"
+            $git_cmd clone "$url" "$custom_dir"
         elif [ $# -eq 2 ] && [ "$2" = "." ]; then
-            git clone "$url"
+            $git_cmd clone "$url"
         else
             # Pass all arguments after $1 to git clone
-            git clone "$url" "${@:2}"
+            $git_cmd clone "$url" "${@:2}"
         fi
     else
         echo "Not a valid git repository URL"
@@ -119,7 +128,8 @@ alias @='simplified_git_clone'
 
 # Function to detect if repository uses semantic versioning tags
 function _has_semantic_tags() {
-    local tag_count=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | wc -l)
+    local tag_count
+    tag_count=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | wc -l)
     [ "$tag_count" -gt 0 ]
 }
 
@@ -140,8 +150,10 @@ function _version_gt() {
 function _get_last_synced_tag() {
     local repo_path="$1"
     local root_path="${2:-$(pwd)}"
-    local repo_name=$(basename "$repo_path")
-    local root_name=$(basename "$root_path")
+    local repo_name
+    local root_name
+    repo_name=$(basename "$repo_path")
+    root_name=$(basename "$root_path")
     local state_file="${SYNC_STATE_DIR}/${root_name}_${repo_name}.last_tag"
 
     [ -f "$state_file" ] && cat "$state_file" || echo ""
@@ -151,8 +163,10 @@ function _get_last_synced_tag() {
 function _save_last_synced_tag() {
     local repo_path="$1" tag="$2"
     local root_path="${3:-$(pwd)}"
-    local repo_name=$(basename "$repo_path")
-    local root_name=$(basename "$root_path")
+    local repo_name
+    local root_name
+    repo_name=$(basename "$repo_path")
+    root_name=$(basename "$root_path")
     local state_file="${SYNC_STATE_DIR}/${root_name}_${repo_name}.last_tag"
 
     mkdir -p "$SYNC_STATE_DIR"
@@ -167,11 +181,14 @@ function _save_last_synced_tag() {
 function _sync_repo_by_tags() {
     local repo_dir="$1" verbose="$2" root_path="$3"
     local has_changes=false
+    local current_tag
+    local last_synced_tag
+    local latest_tag
 
     # Get current tag and last synced tag
-    local current_tag=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")
-    local last_synced_tag=$(_get_last_synced_tag "$repo_dir" "$root_path")
-    local latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
+    current_tag=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")
+    last_synced_tag=$(_get_last_synced_tag "$repo_dir" "$root_path")
+    latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
 
     if $verbose; then
         echo "   Current tag: ${current_tag:-'none'}"
@@ -256,17 +273,19 @@ function _detect_force_push() {
 function _show_tag_sync_status() {
     local repo_dir="${1:-.}"
     local root_path="${2:-$(pwd)}"
+    local current_tag
+    local last_synced_tag
+    local latest_tag
 
     if [ ! -d "$repo_dir/.git" ]; then
         echo "❌ Not a git repository: $repo_dir"
         return 1
     fi
-
     cd "$repo_dir" || return 1
 
-    local current_tag=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "none")
-    local last_synced_tag=$(_get_last_synced_tag "$repo_dir" "$root_path")
-    local latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
+    current_tag=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "none")
+    last_synced_tag=$(_get_last_synced_tag "$repo_dir" "$root_path")
+    latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
 
     echo "📊 Tag Status for $(basename "$repo_dir"):"
     echo "   Current: $current_tag"
@@ -284,8 +303,10 @@ function _show_tag_sync_status() {
 function _reset_tag_sync_state() {
     local repo_dir="${1:-.}"
     local root_path="${2:-$(pwd)}"
-    local repo_name=$(basename "$repo_dir")
-    local root_name=$(basename "$root_path")
+    local repo_name
+    local root_name
+    repo_name=$(basename "$repo_dir")
+    root_name=$(basename "$root_path")
     local state_file="${SYNC_STATE_DIR}/${root_name}_${repo_name}.last_tag"
 
     if [ -f "$state_file" ]; then
@@ -300,6 +321,7 @@ function _reset_tag_sync_state() {
 function _migrate_to_tag_sync() {
     local repo_dir="${1:-.}"
     local root_path="${2:-$(pwd)}"
+    local latest_tag
 
     if [ ! -d "$repo_dir/.git" ]; then
         echo "❌ Not a git repository: $repo_dir"
@@ -309,7 +331,7 @@ function _migrate_to_tag_sync() {
     cd "$repo_dir" || return 1
 
     if _has_semantic_tags; then
-        local latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
+        latest_tag=$(git tag -l | grep -E "$SYNC_REPOS_TAG_PATTERN" | sort -V | tail -n1)
         if [ -n "$latest_tag" ]; then
             _save_last_synced_tag "$repo_dir" "$latest_tag" "$root_path"
             echo "✅ Migrated $(basename "$repo_dir") to tag-based sync (starting from $latest_tag)"
@@ -374,7 +396,8 @@ function sync_git_repos() {
     done
 
     # Store the original directory
-    local original_dir=$(pwd)
+    local original_dir
+    original_dir=$(pwd)
     local exit_status=0
     local repos_checked=0
     local repos_updated=0
@@ -427,8 +450,10 @@ function sync_git_repos() {
             fi
 
             # Store original git settings
-            local original_autocrlf=$(git config --get core.autocrlf)
-            local original_safecrlf=$(git config --get core.safecrlf)
+            local original_autocrlf
+            local original_safecrlf
+            original_autocrlf=$(git config --get core.autocrlf)
+            original_safecrlf=$(git config --get core.safecrlf)
             # Temporarily disable CRLF conversion and warnings
             if [ -n "$original_autocrlf" ]; then
                 git config core.autocrlf false
@@ -438,9 +463,11 @@ function sync_git_repos() {
             fi
 
             # Get current branch/tag
-            local current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
+            local current_ref
+            local default_branch
+            current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
             # Get default branch
-            local default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
+            default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
 
             # Check for pending changes
             if ! git diff --quiet || ! git diff --cached --quiet; then
@@ -509,7 +536,8 @@ function sync_git_repos() {
 
             # Execute appropriate sync strategy
             if $use_tag_sync; then
-                local tag_sync_result=$(_sync_repo_by_tags "$(pwd)" "$verbose" "$original_dir")
+                local tag_sync_result
+                tag_sync_result=$(_sync_repo_by_tags "$(pwd)" "$verbose" "$original_dir")
                 if [ "$tag_sync_result" = "true" ]; then
                     has_changes=true
                 fi
@@ -542,14 +570,16 @@ function sync_git_repos() {
                     fi
                 else
                     # Sync current branch/tag
-                    local current_before_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
+                    local current_before_rev
+                    current_before_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
 
                     if ! git fetch -q origin "$current_ref:$current_ref" 2>/dev/null; then
                         if $verbose; then
                             echo "   ℹ️  Could not sync $current_ref directly"
                         fi
                     else
-                        local current_after_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
+                        local current_after_rev
+                        current_after_rev=$(git rev-parse HEAD 2>/dev/null || echo "")
                         if [ -n "$current_before_rev" ] && [ -n "$current_after_rev" ] && [ "$current_before_rev" != "$current_after_rev" ]; then
                             has_changes=true
                             if $verbose; then
