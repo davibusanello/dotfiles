@@ -174,6 +174,40 @@ function _save_last_synced_tag() {
 }
 
 # =============================================================================
+# Git Repository Maintenance Functions
+# =============================================================================
+
+# Function to detect and fix ambiguous refs (40-hex character refs)
+# These refs are typically created by mistake and cause warnings during git operations
+# Returns: 0 if no issues or successfully fixed, 1 if errors occurred
+function _fix_ambiguous_refs() {
+    local verbose="${1:-false}"
+    local ambiguous_refs
+
+    # Check if there are any 40-hex refs
+    ambiguous_refs=$(git for-each-ref --format="%(refname)" 2>/dev/null | grep -E '/[0-9a-f]{40}$' || true)
+
+    if [ -n "$ambiguous_refs" ]; then
+        if $verbose; then
+            echo "   🔧 Found ambiguous refs (40-hex), cleaning up..."
+        fi
+
+        # Delete each ambiguous ref
+        if echo "$ambiguous_refs" | xargs -r -n1 git update-ref -d 2>/dev/null; then
+            if $verbose; then
+                echo "   ✅ Cleaned up ambiguous refs"
+            fi
+            return 0
+        else
+            echo "   ⚠️  Failed to clean up some ambiguous refs"
+            return 1
+        fi
+    fi
+
+    return 0
+}
+
+# =============================================================================
 # Core Tag-Based Sync Logic
 # =============================================================================
 
@@ -448,6 +482,9 @@ function sync_git_repos() {
             if $verbose; then
                 echo "🔍 Checking $dir"
             fi
+
+            # Fix any ambiguous refs (40-hex character refs) before performing operations
+            _fix_ambiguous_refs "$verbose"
 
             # Store original git settings
             local original_autocrlf
