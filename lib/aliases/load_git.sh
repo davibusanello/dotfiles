@@ -207,6 +207,86 @@ function _fix_ambiguous_refs() {
     return 0
 }
 
+# Function to detect and clean up stale lock files
+# This is triggered only when a Git operation fails with a lock error
+# Returns: 0 if locks were found and removed, 1 otherwise
+function _cleanup_lock_files_on_error() {
+    local repo_dir="$1"
+    local error_output="$2"
+    local verbose="${3:-false}"
+
+    # Check if the error is a lock file issue
+    if echo "$error_output" | grep -q "Unable to create.*\.lock.*File exists"; then
+        if $verbose; then
+            echo "   🔓 Detected lock file error, searching for stale locks..."
+        fi
+
+        local locks_removed=0
+
+        # Strategy 1: Extract the specific lock file path from error message
+        # Error format: "Unable to create '/path/to/file.lock': File exists"
+        local specific_lock
+        specific_lock=$(echo "$error_output" | grep -o "Unable to create '[^']*\.lock'" | sed "s/Unable to create '//;s/'//" | head -n1)
+
+        # Give a tiny delay in case of transient lock (process just finishing)
+        sleep 0.1
+
+        if [ -n "$specific_lock" ]; then
+            if [ -f "$specific_lock" ]; then
+                if $verbose; then
+                    echo "   🔧 Found specific lock file: $specific_lock"
+                fi
+                rm -f "$specific_lock" 2>/dev/null && locks_removed=$((locks_removed + 1))
+            elif $verbose; then
+                echo "   ℹ️  Specific lock no longer exists: $specific_lock"
+            fi
+
+            # Strategy 2: Also check the parent directory for related locks
+            # Sometimes the lock is on the parent ref, not the exact file
+            local parent_lock
+            parent_lock=$(dirname "$specific_lock")
+            if [ -f "${parent_lock}.lock" ]; then
+                if $verbose; then
+                    echo "   🔧 Found parent directory lock: ${parent_lock}.lock"
+                fi
+                rm -f "${parent_lock}.lock" 2>/dev/null && locks_removed=$((locks_removed + 1))
+            fi
+        fi
+
+        # Strategy 3: Find all .lock files in the .git directory as fallback
+        local lock_files
+        lock_files=$(find "$repo_dir/.git" -name "*.lock" -type f 2>/dev/null || true)
+
+        if [ -n "$lock_files" ]; then
+            if $verbose; then
+                echo "   🔧 Found additional lock files:"
+                echo "$lock_files" | sed 's/^/      /'
+            fi
+
+            # Remove the lock files and count them
+            local count
+            count=$(echo "$lock_files" | wc -l | tr -d ' ')
+            echo "$lock_files" | xargs rm -f 2>/dev/null
+            locks_removed=$((locks_removed + count))
+        fi
+
+        if [ $locks_removed -gt 0 ]; then
+            echo "   ✅ Removed $locks_removed stale lock file(s)"
+            return 0
+        else
+            # No locks found - possibly a transient issue or active process
+            # Return success anyway to allow retry (lock might have cleared)
+            if $verbose; then
+                echo "   💡 No lock files found - attempting retry anyway"
+                echo "      (Lock may have been transient or held by active process)"
+            fi
+            return 0  # Changed from 1 to 0 to allow retry
+        fi
+    fi
+
+    return 1
+}
+
 # =============================================================================
 # Core Tag-Based Sync Logic
 # =============================================================================
@@ -487,7 +567,9 @@ function sync_git_repos() {
             _fix_ambiguous_refs "$verbose"
 
             # Store original git settings
+            # shellcheck disable=SC2155
             local original_autocrlf=$(git config --get core.autocrlf)
+            # shellcheck disable=SC2155
             local original_safecrlf=$(git config --get core.safecrlf)
             # Temporarily disable CRLF conversion and warnings
             if [ -n "$original_autocrlf" ]; then
@@ -498,8 +580,10 @@ function sync_git_repos() {
             fi
 
             # Get current branch/tag
+            # shellcheck disable=SC2155
             local current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
             # Get default branch
+            # shellcheck disable=SC2155
             local default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
 
             # Check for pending changes
@@ -520,10 +604,75 @@ function sync_git_repos() {
                 fi
             fi
 
-            # Fetch all changes from remote
-            git fetch --all -q
+            # Fetch all changes from remote (with lock error detection and retry)
+            # local fetch_output
+            local fetch_attempt=0
+            local fetch_max_attempts=2
+            local fetch_success=false
+            local tried_prune=false
 
-            # Determine sync strategy (Phase 7: Tag-first behavior)
+            while [ $fetch_attempt -lt $fetch_max_attempts ]; do
+                # shellcheck disable=SC2155
+                local fetch_output=$(git fetch --all -q 2>&1)
+                local fetch_status=$?
+
+                if [ $fetch_status -eq 0 ]; then
+                    fetch_success=true
+                    break
+                else
+                    # Check if it's a lock file error
+                    if _cleanup_lock_files_on_error "$(pwd)" "$fetch_output" "$verbose"; then
+                        if $verbose; then
+                            echo "   🔄 Retrying fetch after lock cleanup..."
+                        fi
+                        fetch_attempt=$((fetch_attempt + 1))
+
+                        # If second attempt also failed with lock error, try pruning
+                        if [ $fetch_attempt -ge $fetch_max_attempts ] && ! $tried_prune; then
+                            if echo "$fetch_output" | grep -q "cannot lock ref"; then
+                                if $verbose; then
+                                    echo "   🧹 Lock persists - attempting to prune stale refs..."
+                                fi
+                                if git remote prune origin 2>&1 | grep -q "error:"; then
+                                    if $verbose; then
+                                        echo "   ⚠️  Prune failed, repository may need manual intervention"
+                                    fi
+                                else
+                                    if $verbose; then
+                                        echo "   ✅ Pruned stale refs, retrying fetch one more time..."
+                                    fi
+                                    tried_prune=true
+                                    fetch_attempt=0  # Reset to try again after prune
+                                    fetch_max_attempts=1  # But only one more time
+                                fi
+                            fi
+                        fi
+                    else
+                        # Not a lock error, break and handle normally
+                        break
+                    fi
+                fi
+            done
+
+            if ! $fetch_success; then
+                if $verbose && [ -n "$fetch_output" ]; then
+                    echo "   ⚠️  Fetch failed: $fetch_output"
+                fi
+                # Mark as failed since we couldn't fetch updates
+                echo "❌ $dir - Failed to fetch from remote"
+                ((repos_failed++))
+
+                # Restore git settings and continue to next repo
+                if [ -n "$original_autocrlf" ]; then
+                    git config core.autocrlf "$original_autocrlf"
+                fi
+                if [ -n "$original_safecrlf" ]; then
+                    git config core.safecrlf "$original_safecrlf"
+                fi
+                cd "$original_dir" || exit 1
+                continue
+            fi
+                        # Determine sync strategy (Phase 7: Tag-first behavior)
             local use_tag_sync=false
             if ! $force_branch_mode; then
                 if $tag_mode; then
@@ -569,6 +718,7 @@ function sync_git_repos() {
 
             # Execute appropriate sync strategy
             if $use_tag_sync; then
+                # shellcheck disable=SC2155
                 local tag_sync_result=$(_sync_repo_by_tags "$(pwd)" "$verbose" "$original_dir")
                 if [ "$tag_sync_result" = "true" ]; then
                     has_changes=true
