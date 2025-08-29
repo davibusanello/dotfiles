@@ -785,6 +785,34 @@ function search_archive() {
     fi
 }
 
+# Function to turn a path into managead by .dotfiles
+function manage_path() {
+    if [ $# -ne 1 ]; then
+        echo "Move a file or directory into the .dotfiles structure and create a symlink"
+        echo "Usage: manage_path <path_to_manage>"
+        return 1
+    fi
+
+    local path_to_manage="$1"
+    local target_base_path="$DOTFILES_PATH/home/"
+    # If original path is ~/.config, change target base path
+    if [[ "$path_to_manage" == *"$(whoami)/.config"* ]]; then
+        target_base_path="$DOTFILES_PATH/home/config/"
+    fi
+    local target_path=""
+    target_path="$target_base_path$(basename "$path_to_manage")"
+
+    mv "$path_to_manage" "$target_path"
+    ln -s "$target_path" "$path_to_manage"
+    echo "Path managed successfully."
+
+    # Create the orchestration config entry
+    echo "Create the orchestration config entry in install.*.conf.yaml"
+    echo "Original path: $path_to_manage"
+    echo "New path: $target_path"
+    return 0
+}
+
 alias fdpack="search_archive"
 
 alias rmf='rm -rf $(fzf -m)'
