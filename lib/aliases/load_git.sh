@@ -487,10 +487,8 @@ function sync_git_repos() {
             _fix_ambiguous_refs "$verbose"
 
             # Store original git settings
-            local original_autocrlf
-            local original_safecrlf
-            original_autocrlf=$(git config --get core.autocrlf)
-            original_safecrlf=$(git config --get core.safecrlf)
+            local original_autocrlf=$(git config --get core.autocrlf)
+            local original_safecrlf=$(git config --get core.safecrlf)
             # Temporarily disable CRLF conversion and warnings
             if [ -n "$original_autocrlf" ]; then
                 git config core.autocrlf false
@@ -500,11 +498,9 @@ function sync_git_repos() {
             fi
 
             # Get current branch/tag
-            local current_ref
-            local default_branch
-            current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
+            local current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)
             # Get default branch
-            default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
+            local default_branch=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5)
 
             # Check for pending changes
             if ! git diff --quiet || ! git diff --cached --quiet; then
@@ -573,8 +569,7 @@ function sync_git_repos() {
 
             # Execute appropriate sync strategy
             if $use_tag_sync; then
-                local tag_sync_result
-                tag_sync_result=$(_sync_repo_by_tags "$(pwd)" "$verbose" "$original_dir")
+                local tag_sync_result=$(_sync_repo_by_tags "$(pwd)" "$verbose" "$original_dir")
                 if [ "$tag_sync_result" = "true" ]; then
                     has_changes=true
                 fi
