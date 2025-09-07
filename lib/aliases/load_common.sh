@@ -55,3 +55,27 @@ function cleanup_logs() {
 }
 
 alias cleanup_logs_3_months="cleanup_logs 3M"
+
+# Zellij attach to session or start new session project with based on current directory name and projects_base layout
+# Improvements: Use layout flag correctly, add error handling, cache directory name
+function zellij_project() {
+    if ! command_exists "zellij"; then
+        echo "Error: zellij command not found. Please install zellij first." >&2
+        return 1
+    fi
+    local session_name
+    if [ -z "$1" ]; then
+        session_name="prj-$(basename "$(pwd)")"
+    else
+        session_name="$1"
+    fi
+
+    # Try to attach to existing session, or create new one with layout
+    if ! zellij attach "$session_name" 2>/dev/null; then
+        zellij --new-session-with-layout projects_base --session "$session_name"
+    fi
+}
+
+# Aliases for zellij_project
+alias zellij_prj="zellij_project"
+alias zprj="zellij_project"
