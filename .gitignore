@@ -1,0 +1,65 @@
+# Temporary/Log directories and files
+tmp/*
+!tmp/.gitkeep
+!tmp/sync_state/.gitkeep
+log/*
+!log/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# Dependencies
+node_modules/
+vendor/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+*.old
+
+# Build artifacts
+/dist/*
+/build/*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+.project
+.metadata
+*.code-workspace
+.kiro/
+.cursor/
+
+# Shell history (if accidentally created in repo)
+.zsh_history
+.bash_history
+
+# Sensitive data
+*.pem
+*.key
+!*.pub.key

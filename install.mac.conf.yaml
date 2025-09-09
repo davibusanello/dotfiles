@@ -26,6 +26,8 @@
 - clean: ['~']
 - link:
     ~/.dotfiles: ''
+    # Script/commands logs
+    ~/logs: logs
     # SHELL
     ~/.oh-my-zsh/custom/themes/powerlevel9k: shell/zsh/powerlevel9k
     ~/.oh-my-zsh/custom/plugins/codestats: shell/code-stats-zsh
