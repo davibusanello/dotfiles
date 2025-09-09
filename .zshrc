@@ -77,9 +77,9 @@ ZSH_FZF_HISTORY_SEARCH_DATES_IN_SEARCH=1
 ZOXIDE_CMD_OVERRIDE="cd"
 
 # Load private envs
-if [ -f "$HOME/.vp-env" ]; then
+if [ -f "$HOME/.vp-dotfiles.env" ]; then
 # shellcheck disable=SC1091
-    \. "$HOME/.vp-env"
+    \. "$HOME/.vp-dotfiles.env"
 fi
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
