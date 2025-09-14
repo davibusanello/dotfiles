@@ -111,9 +111,24 @@
     lastcommit = !git rev-list -n 1 HEAD --pretty=format:%s
     wdiff = diff --word-diff --color-words
 
-    # Get the default branch name from the origin remote
-    # default-origin-branch = !git remote show origin | grep 'HEAD branch' | cut -d' ' -f5
-    default-origin-branch = !git symbolic-ref refs/remotes/origin/HEAD | sd '^refs/remotes/origin/' ''
+    # Get the default branch name from the origin remote (fails if no remote exists)
+    default-origin-branch = "!f() { \
+        branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sd '^refs/remotes/origin/' ''); \
+        if [ -z \"$branch\" ]; then \
+            return 1; \
+        fi; \
+        echo \"$branch\"; \
+    }; f"
+
+    # Get the local default branch (tries remote HEAD, then init.defaultBranch config)
+    default-local-branch = "!f() { \
+        branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sd '^refs/remotes/origin/' ''); \
+        if [ -n \"$branch\" ]; then \
+            echo \"$branch\"; \
+        else \
+            git config --get init.defaultBranch; \
+        fi; \
+    }; f"
 
     # Sync the working branch with the default branch
     sync-working-with-default = !git fetch && git rebase origin/$(git default-origin-branch)
