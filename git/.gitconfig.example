@@ -43,7 +43,43 @@
     uncommit = reset --soft HEAD~1
     # Add changes to Stash and apply it back
     snapshot = !git stash push -m \"snapshot: $(date)\" && git stash apply stash@{0}
-    delsnapshot = !git stash drop "stash@{0}"
+    # Delete the most recent snapshot stash with confirmation (use -f to force without confirmation)
+    delsnapshot = "!f() { \
+        force=false; \
+        if [ \"$1\" = \"-f\" ] || [ \"$1\" = \"--force\" ]; then \
+            force=true; \
+        fi; \
+        snapshot_entry=$(git stash list | grep 'snapshot:' | head -n1); \
+        if [ -n \"$snapshot_entry\" ]; then \
+            snapshot_ref=$(echo \"$snapshot_entry\" | cut -d: -f1); \
+            branch=$(echo \"$snapshot_entry\" | cut -d: -f2 | sed 's/^ *//'); \
+            timestamp=$(echo \"$snapshot_entry\" | grep -o 'snapshot:.*' | sed 's/snapshot: *//'); \
+            echo \"📸 Snapshot found:\"; \
+            echo \"   Branch: $branch\"; \
+            echo \"   Time: $timestamp\"; \
+            echo \"   Ref: $snapshot_ref\"; \
+            if $force; then \
+                echo \"\"; \
+                git stash drop \"$snapshot_ref\"; \
+                echo \"✅ Snapshot deleted (forced)\"; \
+            else \
+                echo \"\"; \
+                echo -n \"Delete this snapshot? (y/N): \"; \
+                read confirm; \
+                if [ \"$confirm\" = \"y\" ] || [ \"$confirm\" = \"Y\" ]; then \
+                    git stash drop \"$snapshot_ref\"; \
+                    echo \"✅ Snapshot deleted\"; \
+                else \
+                    echo \"❌ Cancelled\"; \
+                    return 1; \
+                fi; \
+            fi; \
+        else \
+            echo '❌ No snapshot found in stash list.'; \
+            return 1; \
+        fi; \
+    }; f"
+    force-delsnapshot = delsnapshot --force
 
     # Sync the fork repository with the upstream
     syncfork = "!sh $DOTFILES_PATH/git/git_sync_forked_repository.sh"
