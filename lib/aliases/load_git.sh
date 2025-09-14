@@ -1,5 +1,38 @@
 #!/usr/bin/env bash
 
+# =============================================================================
+# Git Aliases and Helper Functions
+# =============================================================================
+#
+# This file contains advanced Git workflows and multi-repository operations.
+#
+# GITCONFIG DEPENDENCIES:
+# -----------------------
+# Several functions in this file depend on aliases defined in git/.gitconfig:
+#
+#   1. git default-origin-branch
+#      - Used by: git_default_branch(), sync_git_repos(), reset_default_branch()
+#      - Purpose: Get default branch name (faster than 'git remote show origin')
+#      - Command: git symbolic-ref refs/remotes/origin/HEAD | sd '^refs/remotes/origin/' ''
+#
+#   2. git wdiff
+#      - Used by: gidd alias
+#      - Purpose: Word-level diff with color highlighting
+#      - Command: git diff --word-diff --color-words
+#
+#   3. git fix-eof-newlines-all (optional)
+#      - Purpose: Add final newlines to all tracked files
+#      - Not currently wrapped by shell aliases
+#
+#   4. git fix-eof-newlines-branch (optional)
+#      - Purpose: Add final newlines to changed files in branch
+#      - Not currently wrapped by shell aliases
+#
+# For full list of gitconfig aliases, see: git/.gitconfig
+# For analysis of gitconfig vs shell aliases, see: docs/git-aliases-analysis.md
+#
+# =============================================================================
+
 # Configuration variables for tag-based sync
 # TODO: maybe move to .env
 # Sync state directory
@@ -27,8 +60,10 @@ function github_create_repository_from_current_dir() {
     gh repo create "$(basename "$(pwd)")" --source=. --remote=origin --push "$@"
 }
 
+# Get default branch name from origin remote
+# Uses gitconfig alias for better performance (local operation, no network call)
 function git_default_branch() {
-    git remote show origin 2>/dev/null | grep 'HEAD branch' | cut -d' ' -f5
+    git default-origin-branch
 }
 
 # =============================================================================
@@ -949,9 +984,9 @@ alias gi='gitignore_generate_stack'
 alias ghrc='github_create_repository_from_current_dir'
 
 # =============================================================================
-# Enhanced git diff
+# Enhanced git diff (uses gitconfig aliases)
 
-# Detailed git diff
+# Detailed git diff - uses 'git wdiff' from gitconfig
 alias gidd='git wdiff'
 # Diff file vs branch
 alias gdfb='git_diff_file_vs_branch'

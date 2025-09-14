@@ -20,6 +20,9 @@
 	pager = delta # less -F -X
 	excludesfile = "~/.gitignore_global"
 	attributesfile = "~/.gitattributes"
+	# Warning to ensure files end with a newline
+	whitespace = blank-at-eol,blank-at-eof
+    eol = lf
 [cola]
 	spellcheck = false
 	expandtab = true
@@ -78,6 +81,15 @@
 
     # Sync the working branch with the default branch
     sync-working-with-default = !git fetch && git rebase origin/$(git default-origin-branch)
+
+    # Add final newline to all tracked files in repository
+    fix-eof-newlines-all = !git ls-files -z | xargs -0 sed -i '' -e '$a\\'
+
+    # Add final newline to files changed in current branch (compared to default branch)
+    fix-eof-newlines-branch = "!f() { \
+        default_branch=$(git default-origin-branch); \
+        git diff --name-only --diff-filter=ACM -z origin/$default_branch...HEAD | xargs -0 sed -i '' -e '$a\\'; \
+    }; f"
 
 [merge]
 	tool = meld
