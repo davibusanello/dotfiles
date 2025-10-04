@@ -76,7 +76,8 @@ ZSH_FZF_HISTORY_SEARCH_DATES_IN_SEARCH=1
 # ZOXIDE_CMD_OVERRIDE
 ZOXIDE_CMD_OVERRIDE="cd"
 
-# Load private envs
+# Load private envs and dotfiles that must remain outside of git or public repos
+# Load private envs  --- IGNORE ---
 if [ -f "$HOME/.vp-dotfiles.env" ]; then
 # shellcheck disable=SC1091
     \. "$HOME/.vp-dotfiles.env"
@@ -128,8 +129,8 @@ alias zshconfig='$EDITOR ~/.zshrc'
 alias ohmyzsh='$EDITOR ~/.oh-my-zsh'
 
 # Personal
-export HISTSIZE=5000
-export SAVEHIST=10000
+export HISTSIZE=10000
+export SAVEHIST=15000
 # History display line and date time
 export HISTTIMEFORMAT='%F %T '
 export PAGER=less

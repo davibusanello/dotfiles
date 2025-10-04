@@ -6,6 +6,10 @@ export DOTFILES_PATH="$HOME/.dotfiles"
 export GPG_TTY=$(tty)
 export LC_ALL="en_US.UTF-8"
 export LC_CTYPE="en_US.UTF-8"
+# Set history size
+export HISTSIZE=10000
+export HISTFILESIZE=15000
+
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Adds Rust cargo to path
