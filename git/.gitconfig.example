@@ -111,24 +111,65 @@
     lastcommit = !git rev-list -n 1 HEAD --pretty=format:%s
     wdiff = diff --word-diff --color-words
 
-    # Get the default branch name from the origin remote (fails if no remote exists)
-    default-origin-branch = "!f() { \
-        branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sd '^refs/remotes/origin/' ''); \
-        if [ -z \"$branch\" ]; then \
-            return 1; \
+    # Get the default branch based on remote/local target
+    # Usage: git default-branch [origin|upstream|local|<remote-name>] [--strict]
+    # The default is 'origin' if no argument is provided
+    # Remote 'origin' is the default remote-name used when cloning a repository
+    # Remote 'upstream' is commonly used for forked repositories to point to the original repository
+    # The 'local' option retrieves the local default branch (init.defaultBranch) if remote HEAD is not found
+    # --strict flag: Exit with error if remote doesn't exist (instead of falling back to init.defaultBranch)
+    # Note: If the specified remote doesn't exist, falls back to init.defaultBranch config (unless --strict is used)
+    # Examples:
+    #   git default-branch                -> returns origin's default branch (e.g., 'main')
+    #   git default-branch upstream       -> returns upstream's default branch or init.defaultBranch if not found
+    #   git default-branch local          -> returns init.defaultBranch (e.g., 'main')
+    #   git default-branch upstream --strict  -> exits with error if upstream remote doesn't exist
+    # TODO: Consider this as boilerplate for sd vs sed usage based on availability
+    # Consider this as boilerplate for sd vs sed usage based on availability
+    # if sd is installed, use it for better performance
+    # if not, fallback to sed
+    # TODO: if not interested, just remove the conditional and use your choice
+    default-branch = "!f() { \
+        target=\"origin\"; \
+        strict=false; \
+        is_remote=true; \
+        for arg in \"$@\"; do \
+            if [ \"$arg\" = \"--strict\" ]; then \
+                strict=true; \
+            elif [ \"$arg\" = \"local\" ]; then \
+                is_remote=false; \
+                target=\"origin\"; \
+            else \
+                target=\"$arg\"; \
+            fi; \
+        done; \
+        if command -v sd >/dev/null 2>&1; then \
+            branch=$(git symbolic-ref refs/remotes/$target/HEAD 2>/dev/null | sd \"^refs/remotes/$target/\" ''); \
+        else \
+            branch=$(git symbolic-ref refs/remotes/$target/HEAD 2>/dev/null | sed \"s|^refs/remotes/$target/||\"); \
         fi; \
-        echo \"$branch\"; \
-    }; f"
-
-    # Get the local default branch (tries remote HEAD, then init.defaultBranch config)
-    default-local-branch = "!f() { \
-        branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sd '^refs/remotes/origin/' ''); \
         if [ -n \"$branch\" ]; then \
             echo \"$branch\"; \
+        elif $strict && $is_remote; then \
+            echo \"Error: Remote '$target' does not exist or has no HEAD reference\" >&2; \
+            return 1; \
         else \
             git config --get init.defaultBranch; \
         fi; \
     }; f"
+
+    # Get the default branch name from the origin remote
+    default-origin-branch = "!f() { git default-branch origin \"$@\"; }; f"
+
+    # Get the default branch name from the upstream remote
+    default-upstream-branch = "!f() { git default-branch upstream \"$@\"; }; f"
+
+    # Get the local default branch (tries remote HEAD, then init.defaultBranch config)
+    default-local-branch = "!f() { git default-branch local \"$@\"; }; f"
+
+    # Sync the working branch with the default branch
+    sync-working-with-default = !git fetch && git rebase origin/$(git default-origin-branch)
+
 
     # Sync the working branch with the default branch
     sync-working-with-default = !git fetch && git rebase origin/$(git default-origin-branch)
