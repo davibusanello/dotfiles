@@ -365,11 +365,19 @@ load-nvm-path
 # if [[ $(uname -m) == 'arm64' ]]; then
 # fi
 
-# Load Bun
-function load_bun() {
-    if [ -d "$HOME/.bun" ]; then
-        export BUN_INSTALL="$HOME/.bun"
-        export PATH="$BUN_INSTALL/bin:$PATH"
-    fi
+# Load Bun (idempotent)
+load_bun_path() {
+    command -v bun >/dev/null 2>&1 || [[ -d "$HOME/.bun" ]] || return
+    export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+
+    local bun_pm_bin
+    bun_pm_bin="$(bun pm bin -g 2>/dev/null || true)"
+
+    prepend_paths_if_exist \
+        "$bun_pm_bin" \
+        "$BUN_INSTALL/bin" \
+        "$HOME/node_modules/.bin" \
+        "$BUN_INSTALL/install/global/bin"
 }
-load_bun
+
+load_bun_path
