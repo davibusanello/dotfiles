@@ -236,7 +236,26 @@ if [ -f "${HOME}/google-cloud-sdk/completion.zsh.inc" ]; then . "${HOME}/google-
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 # Following shellcheck will break completations
 # shellcheck disable=SC2206
-fpath=("${HOME}/.docker/completions" $fpath)
+if [[ -d "${HOME}/.docker/completions" ]]; then
+    fpath=("${HOME}/.docker/completions" $fpath)
+fi
+
+# Initialize completion system once (handles zcompdump properly)
+# Check for and remove stale zcompdump lock files
+[[ -f ~/.zcompdump.zwc ]] && rm -f ~/.zcompdump.zwc 2>/dev/null
+autoload -Uz compinit
+
+# Run compinit with cache optimization (rebuild cache only once per day)
+# The complex expression is a zsh glob qualifier - shellcheck doesn't understand it
+# shellcheck disable=SC1009,SC1073,SC1072,SC1036
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+    compinit
+else
+    compinit -C
+fi
+# End of completion initialization
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/davibusanello/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
 # End of Docker CLI completions
