@@ -50,8 +50,8 @@ end_of_line = lf
 max_line_length = 80
 
 [*.{md,rst,in}]
-indent_style = ignore
-indent_size = ignore
+indent_style = space
+indent_size = 4
 
 [*.md]
 trim_trailing_whitespace = false
