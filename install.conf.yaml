@@ -29,8 +29,8 @@
         force: true
         path: .profile
     # GIT
-    ~/.gitconfig: git/.gitconfig
-    ~/.gitignore_global: git/.gitignore_global
+    ~/.gitconfig: home/_git/global.gitconfig
+    ~/.gitignore: home/_git/global.gitignore
     # Wakatime
     ~/.wakatime.cfg: .wakatime.cfg
     # SSH config

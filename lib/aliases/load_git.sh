@@ -8,7 +8,7 @@
 #
 # GITCONFIG DEPENDENCIES:
 # -----------------------
-# Several functions in this file depend on aliases defined in git/.gitconfig:
+# Several functions in this file depend on aliases defined in home/_git/global.gitconfig:
 #
 #   1. git default-origin-branch
 #      - Used by: git_default_branch(), sync_git_repos(), reset_default_branch()
@@ -28,7 +28,7 @@
 #      - Purpose: Add final newlines to changed files in branch
 #      - Not currently wrapped by shell aliases
 #
-# For full list of gitconfig aliases, see: git/.gitconfig
+# For full list of gitconfig aliases, see: home/_git/global.gitconfig
 # For analysis of gitconfig vs shell aliases, see: docs/git-aliases-analysis.md
 #
 # =============================================================================
