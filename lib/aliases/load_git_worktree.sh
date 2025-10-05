@@ -34,6 +34,9 @@
 
 # Core behavior
 WORKTREE_DEFAULT_BASE_DIR="${WORKTREE_DEFAULT_BASE_DIR:-../worktrees/}"
+if [ -n "$WORKTREE_DEFAULT_BASE_DIR" ]; then
+    WORKTREE_DEFAULT_BASE_DIR="${WORKTREE_DEFAULT_BASE_DIR%/}/"
+fi
 WORKTREE_AUTO_CD="${WORKTREE_AUTO_CD:-true}"
 WORKTREE_CLEANUP_ON_REMOVE="${WORKTREE_CLEANUP_ON_REMOVE:-true}"
 
@@ -46,6 +49,28 @@ WORKTREE_SUBMODULE_SUPPORT="${WORKTREE_SUBMODULE_SUPPORT:-disabled}"
 WORKTREE_LOCK_TIMEOUT="${WORKTREE_LOCK_TIMEOUT:-14d}"
 WORKTREE_AUTO_INSTALL_DEPS="${WORKTREE_AUTO_INSTALL_DEPS:-false}"
 WORKTREE_STRICT_NAMING="${WORKTREE_STRICT_NAMING:-false}"
+
+# Specific worktree paths (optional)
+# Purpose-specific worktree directories for tools or MCP servers I'm using in a fixed version that I reviewed for security or compatibility issues
+# This keeps them isolated from my regular coding worktrees
+# Then use the ENV variable WORKTREE_DEFAULT_BASE_DIR to point to these when creating worktrees for those purposes
+# Suggested worktree path name patterns:
+# <toolname_in-use> Preferably use underscores for separation of the property name parts
+# <toolname_in-use_version>
+# Usage example: WORKTREE_DEFAULT_BASE_DIR="$WORKTREE_TOOLS_IN_USE_BASE_DIR" git_worktree_create "git_in-use" "v1.2.3"
+# Usage example: WORKTREE_DEFAULT_BASE_DIR="$WORKTREE_TOOLS_IN_USE_BASE_DIR" git_worktree_create "git_in-use_v1.2.3" "v1.2.3"
+# Using the ENV variable to specify the tool when using the tool
+
+# MCP Server in use worktrees
+WORKTREE_MCP_SERVER_IN_USE_BASE_DIR="${WORKTREE_MCP_SERVER_IN_USE_BASE_DIR:-$HOME/mcp-use-worktrees/}"
+if [ -n "$WORKTREE_MCP_SERVER_IN_USE_BASE_DIR" ]; then
+    WORKTREE_MCP_SERVER_IN_USE_BASE_DIR="${WORKTREE_MCP_SERVER_IN_USE_BASE_DIR%/}/"
+fi
+# Tools in use worktrees
+WORKTREE_TOOLS_IN_USE_BASE_DIR="${WORKTREE_TOOLS_IN_USE_BASE_DIR:-$HOME/tools-use-worktrees/}"
+if [ -n "$WORKTREE_TOOLS_IN_USE_BASE_DIR" ]; then
+    WORKTREE_TOOLS_IN_USE_BASE_DIR="${WORKTREE_TOOLS_IN_USE_BASE_DIR%/}/"
+fi
 
 # =============================================================================
 # Utility Functions
