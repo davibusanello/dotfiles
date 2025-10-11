@@ -31,6 +31,11 @@ alias timestamp_short='date +"%Y-%m-%d %H:%M"'
 alias timestamp_iso8601_filename='date +"%Y%m%dT%H%M%S%z"'
 alias timestamp_iso8601_filename_without_timezone='date +"%Y%m%dT%H%M%S"'
 alias timestamp_iso8601_filename_with_epoch='date +"%Y%m%dT%H%M%S%N%z"'
+# Curent date only
+alias current_date_short='date +"%Y-%m-%d"'
+alias current_date='current_date_short'
+alias current_date_filename='date +"%Y%m%d"'
+
 
 # Ripgrep
 # Search all patterns no necessarily in the same line

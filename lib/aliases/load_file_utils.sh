@@ -816,3 +816,82 @@ function manage_path() {
 alias fdpack="search_archive"
 
 alias rmf='rm -rf $(fzf -m)'
+
+# Make `mkdir` behave like `mkdir -p` by default. This ensures parent
+# directories are created automatically. If you need the original
+# behavior (without -p), you can call the external command directly with
+# `command mkdir -- <args>` or prefix with a backslash: `\mkdir`.
+# Unalias mkdir first if it exists to avoid conflicts
+unalias mkdir 2>/dev/null || true
+mkdir() {
+    # Cache whether the system mkdir understands `--` so we can safely
+    # forward directories that start with a dash. We test once per shell
+    # session using a harmless probe (`.` already exists).
+    if [ -z "${__DOTFILES_MKDIR_SUPPORTS_DASHDASH+x}" ]; then
+        if command mkdir -p -- . >/dev/null 2>&1; then
+            export __DOTFILES_MKDIR_SUPPORTS_DASHDASH=1
+        else
+            export __DOTFILES_MKDIR_SUPPORTS_DASHDASH=0
+        fi
+    fi
+
+    # Strip any existing -p flags from arguments to avoid duplication
+    local args=()
+    for arg in "$@"; do
+        if [ "$arg" != "-p" ]; then
+            args+=("$arg")
+        fi
+    done
+
+    # Use `command` to invoke the external mkdir and avoid recursion.
+    if [ "${__DOTFILES_MKDIR_SUPPORTS_DASHDASH}" = 1 ]; then
+        command mkdir -p -- "${args[@]}"
+    else
+        command mkdir -p "${args[@]}"
+    fi
+}
+
+# Make `mv` create parent directories automatically in the destination path.
+# If you need the original behavior (no auto-creation), you can call the
+# external command directly with `command mv <args>` or prefix: `\mv`.
+# Unalias mv first if it exists to avoid conflicts
+unalias mv 2>/dev/null || true
+mv() {
+    # Cache whether the system mv understands `--` for safer argument handling
+    if [ -z "${__DOTFILES_MV_SUPPORTS_DASHDASH+x}" ]; then
+        if command mv -- --help >/dev/null 2>&1; then
+            export __DOTFILES_MV_SUPPORTS_DASHDASH=1
+        else
+            export __DOTFILES_MV_SUPPORTS_DASHDASH=0
+        fi
+    fi
+
+    # Get the last argument (destination)
+    local dest
+    for dest in "$@"; do :; done
+
+    # Check if destination looks like a file path (contains / and is not a flag)
+    if [[ "$dest" == */* ]] && [[ "$dest" != -* ]]; then
+        # Extract directory path from destination
+        local dest_dir
+        if [[ "$dest" == */ ]]; then
+            # Destination ends with /, it's a directory
+            dest_dir="$dest"
+        else
+            # Extract parent directory
+            dest_dir="$(dirname "$dest")"
+        fi
+
+        # Create parent directory if it doesn't exist
+        if [[ ! -d "$dest_dir" ]]; then
+            command mkdir -p "$dest_dir"
+        fi
+    fi
+
+    # Use `command` to invoke the external mv and avoid recursion
+    if [ "${__DOTFILES_MV_SUPPORTS_DASHDASH}" = 1 ]; then
+        command mv -i -- "$@"
+    else
+        command mv -i "$@"
+    fi
+}
